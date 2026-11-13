@@ -1191,6 +1191,7 @@ SCTI_11654_summary |>
     y = "AVG YoY Wage Growth (%)"
   ) +
   theme_minimal()
+
 #INDUSTRY NAMES for SSB 9175 using jsonlite
 
 # Retrieve official industry names in English
@@ -1224,7 +1225,7 @@ SCTI_9175 |>
 
 
 # SIMPLE REGRESSION for SSB 9175 
-# Calculate annual Brent price growth
+# First we calcute the annual Brent price growth for the regression
 BRENT_9175 <- BRENT_Q |>
   arrange(quarter) |>
   mutate(
@@ -1232,11 +1233,11 @@ BRENT_9175 <- BRENT_Q |>
   ) |>
   select(quarter, brent_yoy)
 
-# Add annual Brent growth to SSB 9175
+# Adding annual Brent growth to SSB 9175
 REG_9175 <- SCTI_9175 |>
   left_join(BRENT_9175, by = "quarter")
 
-# Select oil and gas extraction industry
+# Selecting oil and gas extraction industry
 REG_9175_06 <- REG_9175 |>
   filter(
     NACE == "pub2X06",
@@ -1244,24 +1245,24 @@ REG_9175_06 <- REG_9175 |>
     is.finite(brent_yoy)
   )
 
-# Check available observations
+# Afterwards we use nrow to check available observations
 nrow(REG_9175_06)
 
-# Stop with a clear message if there are no usable observations
+# Using the if, stop method to check if there are no usable observations
 if (nrow(REG_9175_06) < 3) {
-  stop("Not enough complete observations. Check NACE codes and Brent join.")
+  stop("Not enough complete observations")
 }
 
-# Run simple linear regression
+# Here is the simple regression model
 model_9175 <- lm(
   value ~ brent_yoy,
   data = REG_9175_06
 )
 
-# Examine the results
+# Examining the results
 summary(model_9175)
 
-#REGRESSION VISUALIZATION for SSB 9175
+# Using ggplot to visualize the model for SSB_9175
 
 ggplot(REG_9175_06,
        aes(x = brent_yoy, y = value)) +
@@ -1272,17 +1273,18 @@ ggplot(REG_9175_06,
     color = "red"
   ) +
   labs(
-    title = "Brent Price Growth and Wages and Salaries Growth",
+    title = "Brent Price Growth, Wages and Salary Growth",
     subtitle = unique(REG_9175_06$industry_name)[1],
     x = "Annual Brent Price Growth (%)",
-    y = "Annual Wages and Salaries Growth (%)"
+    y = "Annual Wages and Salary Growth (%)"
   ) +
   theme_minimal()
 
 
 # HEATMAP for SSB 9175
 
-# Add industry names to our comparison dataset
+# Add industry names to our comparison dataset so that we know the specific industry in the y axis
+
 SCTI_9175_sum_comp <- SCTI_9175_sum_comp |>
   mutate(
     industry_name = coalesce(
@@ -1291,25 +1293,12 @@ SCTI_9175_sum_comp <- SCTI_9175_sum_comp |>
     )
   )
 
-# Create the heatmap
-p_heatmap <- ggplot(
-  SCTI_9175_sum_comp,
-  aes(
-    x = episode,
-    y = industry_name,
-    fill = during_difference
-  )
-) +
-  geom_tile(color = "white", 
-            height = 0.5,
-            width = 0.9 ) +
-  geom_text(
-    aes(label = round(during_difference, 1)),
-    size = 3
-  ) +
-  scale_y_discrete(
-    labels = function(x) stringr::str_wrap(x, width = 35)
-  ) +
+# Heatmap creation to visualize for all industries
+p_heatmap <- ggplot(SCTI_9175_sum_comp,
+                    aes(x = episode, y = industry_name, fill = during_difference)) + 
+  geom_tile(color = "white" ) +
+  geom_text( aes(label = round(during_difference, 1)), size = 3) +
+  scale_y_discrete( labels = function(x) str_wrap(x, width = 35)) +
   scale_fill_gradient2(
     low = "red",
     mid = "white",
@@ -1317,9 +1306,9 @@ p_heatmap <- ggplot(
     midpoint = 0
   ) +
   labs(
-    title = "Industry Wages and Salaries Growth During Oil Price Collapses",
+    title = "Industry Wages and Salary Growth During Oil Price Shocks",
     subtitle = "Change in average growth: During minus Before",
-    x = "Oil Price Collapse",
+    x = "Oil Price Shock",
     y = "Industry",
     fill = "Change (pp)"
   ) +
@@ -1328,12 +1317,11 @@ p_heatmap <- ggplot(
     axis.text.y = element_text(size = 10)
   )
 
-# Display heatmap
 print(p_heatmap)
 
-# Save a larger version for readability
+# Creating a png
 ggsave(
-  "SSB_9175_heatmap.png",
+  "heatmap.png",
   p_heatmap,
   width = 16,
   height = 24,
@@ -1345,36 +1333,22 @@ ggsave(
 
 SCTI_9175 |>
   filter(NACE %in% c("pub2X06", "pub2X09")) |>
-  ggplot(
-    aes(
-      x = as.Date(quarter),
-      y = value,
-      color = industry_name
-    )
-  ) +
-  geom_line(linewidth = 0.8) +
-  geom_hline(
-    yintercept = 0,
-    linetype = "dotted"
-  ) +
-  geom_vline(
-    xintercept = as.Date(
-      as.yearqtr(
-        c("2014 Q3", "2020 Q1"),
-        format = "%Y Q%q"
-      )
-    ),
-    linetype = "dashed",
-    color = "red"
-  ) +
+  ggplot(aes (x = quarter, y = value, color = industry_name)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline( yintercept = 0,linetype = "dotted") +
+  geom_vline(xintercept = as.yearqtr( "2014 Q3"),
+             linetype = "dashed", color = "red") + 
+  geom_vline(xintercept = as.yearqtr( "2020 Q1"),
+             linetype = "dashed", color = "red") + 
   labs(
-    title = "Industry Wages and Salaries Growth and Oil Price Collapses",
-    subtitle = "Dashed lines: 2014 Q3 and 2020 Q1",
+    title = "Industry Wages and Salary Growth and Oil Price Collapses",
+    subtitle = "2014 Q3 and 2020 Q1",
     x = "Quarter",
-    y = "Annual Wages and Salaries Growth (%)",
+    y = "Annual Wages and Salary Growth (%)",
     color = "Industry"
   ) +
   theme_minimal()
+
 
 
 ```

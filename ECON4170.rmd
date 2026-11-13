@@ -29,6 +29,8 @@ library(lubridate)
 
 ```{r ACQUISITION, include=FALSE}
 
+#### ACQUISITION ####
+
 ## SSB API interaction:
 
 # SSB 09175. We start with this one because it has the most coverage. 
@@ -133,6 +135,9 @@ rm(brent_url, tables, SSB_datasets)
 ```
 
 ```{r CLEANING, include=FALSE}
+
+#### CLEANING ####
+
 ## BRENT
 
 BRENT_DAILY <- BRENT |>
@@ -1186,7 +1191,188 @@ SCTI_11654_summary |>
     y = "AVG YoY Wage Growth (%)"
   ) +
   theme_minimal()
+#INDUSTRY NAMES for SSB 9175 using jsonlite
+
+# Retrieve official industry names in English
+SSB_labels <- jsonlite::fromJSON(
+  "https://data.ssb.no/api/pxwebapi/v2/tables/09175/data?lang=en",
+  simplifyVector = FALSE
+)
+
+# Here a Vector i linking codes to industry names
+industry_names <- unlist(
+  SSB_labels$dimension$NACE$category$label
+)
+
+# Check that industry codes and names were retrieved
+head(industry_names)
+
+# Add industry names to our existing dataset
+SCTI_9175 <- SCTI_9175 |>
+  mutate(
+    industry_name = coalesce(
+      unname(industry_names[NACE]),
+      NACE
+    )
+  )
+
+# Check the result
+SCTI_9175 |>
+  distinct(NACE, industry_name) |>
+  print(n = Inf)
+
+
+
+# SIMPLE REGRESSION for SSB 9175 
+# Calculate annual Brent price growth
+BRENT_9175 <- BRENT_Q |>
+  arrange(quarter) |>
+  mutate(
+    brent_yoy = (brent / lag(brent, 4) - 1) * 100
+  ) |>
+  select(quarter, brent_yoy)
+
+# Add annual Brent growth to SSB 9175
+REG_9175 <- SCTI_9175 |>
+  left_join(BRENT_9175, by = "quarter")
+
+# Select oil and gas extraction industry
+REG_9175_06 <- REG_9175 |>
+  filter(
+    NACE == "pub2X06",
+    is.finite(value),
+    is.finite(brent_yoy)
+  )
+
+# Check available observations
+nrow(REG_9175_06)
+
+# Stop with a clear message if there are no usable observations
+if (nrow(REG_9175_06) < 3) {
+  stop("Not enough complete observations. Check NACE codes and Brent join.")
+}
+
+# Run simple linear regression
+model_9175 <- lm(
+  value ~ brent_yoy,
+  data = REG_9175_06
+)
+
+# Examine the results
+summary(model_9175)
+
+#REGRESSION VISUALIZATION for SSB 9175
+
+ggplot(REG_9175_06,
+       aes(x = brent_yoy, y = value)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = "Brent Price Growth and Wages and Salaries Growth",
+    subtitle = unique(REG_9175_06$industry_name)[1],
+    x = "Annual Brent Price Growth (%)",
+    y = "Annual Wages and Salaries Growth (%)"
+  ) +
+  theme_minimal()
+
+
+# HEATMAP for SSB 9175
+
+# Add industry names to our comparison dataset
+SCTI_9175_sum_comp <- SCTI_9175_sum_comp |>
+  mutate(
+    industry_name = coalesce(
+      unname(industry_names[NACE]),
+      NACE
+    )
+  )
+
+# Create the heatmap
+p_heatmap <- ggplot(
+  SCTI_9175_sum_comp,
+  aes(
+    x = episode,
+    y = industry_name,
+    fill = during_difference
+  )
+) +
+  geom_tile(color = "white") +
+  geom_text(
+    aes(label = round(during_difference, 1)),
+    size = 3
+  ) +
+  scale_y_discrete(
+    labels = function(x) stringr::str_wrap(x, width = 35)
+  ) +
+  scale_fill_gradient2(
+    low = "red",
+    mid = "white",
+    high = "blue",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Industry Wages and Salaries Growth During Oil Price Collapses",
+    subtitle = "Change in average growth: During minus Before",
+    x = "Oil Price Collapse",
+    y = "Industry",
+    fill = "Change (pp)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 7)
+  )
+
+# Display heatmap
+print(p_heatmap)
+
+# Save a larger version for readability
+ggsave(
+  "SSB_9175_heatmap.png",
+  p_heatmap,
+  width = 16,
+  height = 16,
+  dpi = 300
+)
+
+
+# WAGE GROWTH PLOT for SSB 9175
+
+SCTI_9175 |>
+  filter(NACE %in% c("pub2X06", "pub2X09")) |>
+  ggplot(
+    aes(
+      x = as.Date(quarter),
+      y = value,
+      color = industry_name
+    )
+  ) +
+  geom_line(linewidth = 0.8) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dotted"
+  ) +
+  geom_vline(
+    xintercept = as.Date(
+      as.yearqtr(
+        c("2014 Q3", "2020 Q1"),
+        format = "%Y Q%q"
+      )
+    ),
+    linetype = "dashed",
+    color = "red"
+  ) +
+  labs(
+    title = "Industry Wages and Salaries Growth and Oil Price Collapses",
+    subtitle = "Dashed lines: 2014 Q3 and 2020 Q1",
+    x = "Quarter",
+    y = "Annual Wages and Salaries Growth (%)",
+    color = "Industry"
+  ) +
+  theme_minimal()
+
 
 ```
-
-

@@ -27,10 +27,7 @@ library(quantmod)
 library(lubridate)
 ```
 
-
 ```{r ACQUISITION, include=FALSE}
-
-#### ACQUISITION ####
 
 ## SSB API interaction:
 
@@ -136,9 +133,6 @@ rm(brent_url, tables, SSB_datasets)
 ```
 
 ```{r CLEANING, include=FALSE}
-
-#### CLEANING ####
-
 ## BRENT
 
 BRENT_DAILY <- BRENT |>

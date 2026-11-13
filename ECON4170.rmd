@@ -1300,7 +1300,9 @@ p_heatmap <- ggplot(
     fill = during_difference
   )
 ) +
-  geom_tile(color = "white") +
+  geom_tile(color = "white", 
+            height = 0.5,
+            width = 0.9 ) +
   geom_text(
     aes(label = round(during_difference, 1)),
     size = 3

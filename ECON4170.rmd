@@ -1265,7 +1265,7 @@ summary(model_9175)
 
 ggplot(REG_9175_06,
        aes(x = brent_yoy, y = value)) +
-  geom_point(color = "steelblue") +
+  geom_point(color = "blue") +
   geom_smooth(
     method = "lm",
     se = TRUE,
@@ -1325,7 +1325,7 @@ p_heatmap <- ggplot(
   ) +
   theme_minimal() +
   theme(
-    axis.text.y = element_text(size = 7)
+    axis.text.y = element_text(size = 10)
   )
 
 # Display heatmap
@@ -1336,7 +1336,7 @@ ggsave(
   "SSB_9175_heatmap.png",
   p_heatmap,
   width = 16,
-  height = 16,
+  height = 24,
   dpi = 300
 )
 

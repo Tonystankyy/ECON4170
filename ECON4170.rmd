@@ -1,6 +1,7 @@
 ---
 title: 'Wage Growth Dynamics Following 2014 and 2020 Oil Price Collapses'
-subtitle: 'Term Paper in ECON 4170, Autumn 2026'
+subtitle: 'Term Paper in ECON4170, Autumn 2026'
+date: "2026-11-17"
 output:
   pdf_document:
     toc_depth: 3   
@@ -8,15 +9,14 @@ output:
 fontsize: 11pt
 geometry: margin=1in
 ---
+Candidate Number One: 170104 \hfill Candidate Number Two: 170116
+
 \pagenumbering{gobble}
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-**Candidate Number One:** 170104
-
-**Candidate Number Two:** 170116
 
 ## Abstract {-]
 
@@ -140,28 +140,38 @@ str(BRENT) # overview to inspect the actual data frame. We can see that the date
            # is because of the weeks instead of simply daily observations. 
 
 head(BRENT) # the aforementioned is supported when looking at the first six rows
+```
 
-#BRENT1 <- getSymbols(
-  #"DCOILBRENTEU",
-  #src = "FRED",
-  #auto.assign = FALSE
-#) # the point of this is to determine whether the scrape produced the same data
+```{r SANITY CHECK FRED, eval=FALSE}
+BRENT1F <- getSymbols(
+  "DCOILBRENTEU",
+  src = "FRED",
+  auto.assign = FALSE
+) # the point of this is to determine whether the scrape produced the same data
   # as the official, literature supported, downloading of FRED oil prices.
   # This approach failed with rendering, so we opted for the simpler read.csv
   # should have the same output. 
 
+rm(BRENT1F)
+
+```
+
+```{r ACQUISITION 2, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
+
 BRENT1 <- read.csv(
   "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
-  na.strings = c(".","")
+  na = "."
 )
 
 str(BRENT1)
 
-head(BRENT1) # here we have a very long and cleaner data set. More on this later
+head(BRENT1) 
+
+# here we have a very long and cleaner data set. More on this later
 
 BRENT1 <- data.frame(
-  date = index(BRENT1),
-  price = as.numeric(BRENT1[, 1])
+  date = BRENT1$observation_date,
+  price = BRENT1$DCOILBRENTEU
 )
 
 rm(brent_url, tables, SSB_datasets)
@@ -202,9 +212,13 @@ BRENT1 <- na.omit(BRENT1)
 # when comparing the first rows of both data frames. The conclusion is that
 # scaping worked. With that said, this paper will opt to use the quantmod 
 # FRED output given the extra sensitivity of the variables (one extra decimal)
-# all NA's were removed
+# all NA's were removed. Therefore BRENT is the current object we will use.
 
 BRENT <- BRENT1 
+
+sum(is.na(BRENT))
+
+BRENT1 <- na.omit(BRENT)
 
 rm(BRENT_DAILY, BRENT1)
 
@@ -1252,7 +1266,6 @@ SCTI_9175 <- SCTI_9175 |>
 SCTI_9175 |>
   distinct(NACE, industry_name) |>
   print(n = Inf)
-
 
 
 #### SIMPLE REGRESSION for SSB 9175 ####

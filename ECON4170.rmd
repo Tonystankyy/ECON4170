@@ -12,13 +12,19 @@ geometry: margin=1in
 Candidate Number One: 170104 \hfill Candidate Number Two: 170116
 
 \pagenumbering{gobble}
-\tableofcontents
+
+Abstract 
+
 \clearpage
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
 \pagenumbering{arabic}
 \setcounter{page}{1}
-
-
-## Abstract {-]
 
 ```{r PACKAGES, include=FALSE}
 rm(list = ls()) #removes all code
@@ -46,13 +52,7 @@ library(lubridate)
 set.seed(1234567)
 ```
 
-\newpage
-
-# Abstract 
-
- 
-\newpage
-
+# Introduction and objective
 
 
 ```{r ACQUISITION, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
@@ -142,7 +142,7 @@ str(BRENT) # overview to inspect the actual data frame. We can see that the date
 head(BRENT) # the aforementioned is supported when looking at the first six rows
 ```
 
-```{r SANITY CHECK FRED, eval=FALSE}
+```{r SANITY CHECK FRED, include=FALSE, eval=FALSE}
 BRENT1F <- getSymbols(
   "DCOILBRENTEU",
   src = "FRED",

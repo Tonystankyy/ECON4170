@@ -83,8 +83,17 @@ set.seed(1234567)
 
 # Introduction and objective
 
+The oil industry represents a large share of the value creation in the Norwegian economy. For example, it makes up 18% of the Norwegian economy, 26% of the share of state revenues, 20% of total investmens and 42% of total exports (Ministry of Energy & Norwegian Offshore Directorate, 2026). Therefore understanding how oil price changes affect petroleum-related industries, employment and economic activity through wages is key. When considering these oil price shocks, it is natural to consider the advents of 2014 and 2020. Despite both downturns being measured in oil price, not all oil price shocks are not created equal. As we will see, the surrounding economic and financial conditions during these time periods differed, and these should be represented through the acquired data. 
 
-```{r ACQUISITION, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
+This term paper wishes to understand the proposed mechanism of an oil price shock (2014 & 2020), and how these affected the wage growth. Here, we try to look at the wage growth preceding, during and following said shocks. This is in addition to looking at the intra-industries discrepancies. We also examined regional wages given the 2020 oil price shock as a form of comparison. 
+
+From a coding perspective, this analysis attempts to combine the historical Brent Crude Oil Price futures with quarterly wage data from Statistics Norway (SSB). In this pursuit, a total of five SSB data sets are scraped and acquired to examine industry-level earnings, manufacturing wages, wage developments, and rationality. This analysis furthermore relied heavily on the workflow introduced from the lectures in that we start with acquiring the data, cleaning it, transforming it, and attempting to visualize it using R. To compare with the aforementioned time tables, year over year wage growth is calculated and comparisons are performed. 
+
+The holistic purpose is not isolated to that of identifying causality like in an econometrics paper, it is to try and understand and juxtapose observed wage developments, on the one hand, with two historical economics shocks, on the other. This empiricism of how wage growth developed is affored because of this comparison. 
+
+
+\newpage
+
 
 ## SSB API interaction:
 

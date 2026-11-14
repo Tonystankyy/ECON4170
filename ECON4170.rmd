@@ -1,5 +1,5 @@
 ---
-title: 'Wage Growth Dynamics Following 2014 and 2020 Oil Price Collapses'
+title: 'Wage Growth Dynamics Following 2014 & 2020 Oil Price Collapses'
 subtitle: 'Term Paper in ECON4170, Autumn 2026'
 date: "2026-11-17"
 output:
@@ -13,7 +13,36 @@ Candidate Number One: 170104 \hfill Candidate Number Two: 170116
 
 \pagenumbering{gobble}
 
-Abstract 
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\begin{center}
+\textbf{Abstract}
+\end{center}
+
+Research question: 'How did wage growth across Norwegian industries develop during the oil-price collapses of 2014 and 2020?'. The implementation of coding techniques is consistent with the literature and the lecture summaries. The main conclusion from this analysis is that both downturns introduced wage growth reduction. Despite this, the developments following were unequal. 
+
 
 \clearpage
 

@@ -141,12 +141,19 @@ str(BRENT) # overview to inspect the actual data frame. We can see that the date
 
 head(BRENT) # the aforementioned is supported when looking at the first six rows
 
-BRENT1 <- getSymbols(
-  "DCOILBRENTEU",
-  src = "FRED",
-  auto.assign = FALSE
-) # the point of this is to determine whether the scrape produced the same data
-  # as the official, literature supported, downloading of FRED oil prices. 
+#BRENT1 <- getSymbols(
+  #"DCOILBRENTEU",
+  #src = "FRED",
+  #auto.assign = FALSE
+#) # the point of this is to determine whether the scrape produced the same data
+  # as the official, literature supported, downloading of FRED oil prices.
+  # This approach failed with rendering, so we opted for the simpler read.csv
+  # should have the same output. 
+
+BRENT1 <- read.csv(
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
+  na.strings = c(".","")
+)
 
 str(BRENT1)
 
@@ -1248,7 +1255,8 @@ SCTI_9175 |>
 
 
 
-# SIMPLE REGRESSION for SSB 9175 
+#### SIMPLE REGRESSION for SSB 9175 ####
+
 # First we calcute the annual Brent price growth for the regression
 BRENT_9175 <- BRENT_Q |>
   arrange(quarter) |>

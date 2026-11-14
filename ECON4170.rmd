@@ -1,11 +1,28 @@
 ---
-title: 'Oil Price Shocks: 2014 & 2020 Case Study'
-author: 'Candidates: 170104 & 170116'
-date: "2026-11-17"
-output: pdf_document
+title: 'Wage Growth Dynamics Following 2014 and 2020 Oil Price Collapses'
+subtitle: 'Term Paper in ECON 4170, Autumn 2026'
+output:
+  pdf_document:
+    toc_depth: 3   
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
 ---
+\pagenumbering{gobble}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+**Candidate Number One:** 170104
+
+**Candidate Number Two:** 170116
+
+## Abstract {-]
 
 ```{r PACKAGES, include=FALSE}
+rm(list = ls()) #removes all code
+
 required <- c(
   "readxl", "readr", "dplyr", "tidyr", "stringr",
   "lubridate", "ggplot2", "broom", "httr2", "jsonlite", "PxWebApiData", "quantmod", "zoo"
@@ -25,11 +42,20 @@ library(PxWebApiData)
 library(rvest)
 library(quantmod)
 library(lubridate)
+
+set.seed(1234567)
 ```
 
-```{r ACQUISITION, include=FALSE}
+\newpage
 
-#### ACQUISITION ####
+# Abstract 
+
+ 
+\newpage
+
+
+
+```{r ACQUISITION, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
 
 ## SSB API interaction:
 
@@ -135,8 +161,6 @@ rm(brent_url, tables, SSB_datasets)
 ```
 
 ```{r CLEANING, include=FALSE}
-
-#### CLEANING ####
 
 ## BRENT
 

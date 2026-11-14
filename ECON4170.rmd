@@ -87,13 +87,11 @@ The oil industry represents a large share of the value creation in the Norwegian
 
 This term paper wishes to understand the proposed mechanism of an oil price shock (2014 & 2020), and how these affected the wage growth. Here, we try to look at the wage growth preceding, during and following said shocks. This is in addition to looking at the intra-industries discrepancies. We also examined regional wages given the 2020 oil price shock as a form of comparison. 
 
-From a coding perspective, this analysis attempts to combine the historical Brent Crude Oil Price futures with quarterly wage data from Statistics Norway (SSB). In this pursuit, a total of five SSB data sets are scraped and acquired to examine industry-level earnings, manufacturing wages, wage developments, and rationality. This analysis furthermore relied heavily on the workflow introduced from the lectures in that we start with acquiring the data, cleaning it, transforming it, and attempting to visualize it using R. To compare with the aforementioned time tables, year over year wage growth is calculated and comparisons are performed. 
+From a coding perspective, this analysis attempts to combine the historical Brent Crude Oil Price Futures (BCOPF) with quarterly wage data from Statistics Norway (SSB). In this pursuit, a total of five SSB data sets are scraped and acquired to examine industry-level earnings, manufacturing wages, wage developments, and rationality. This analysis furthermore relied heavily on the workflow introduced from the lectures in that we start with acquiring the data, cleaning it, transforming it, and attempting to visualize it using R. To compare with the aforementioned time tables, year over year wage growth is calculated and comparisons are performed. 
 
 The holistic purpose is not isolated to that of identifying causality like in an econometrics paper, it is to try and understand and juxtapose observed wage developments, on the one hand, with two historical economics shocks, on the other. This empiricism of how wage growth developed is affored because of this comparison. 
 
-
-\newpage
-
+```{r ACQUISITION, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
 
 ## SSB API interaction:
 
@@ -265,6 +263,8 @@ str(BRENT)
 head(BRENT)
 
 tail(BRENT)
+
+BRENT$date <- as.Date(BRENT$date)
 
 ggplot(BRENT, aes(x = date, y = price)) + geom_line(color = "red") + 
   labs(
@@ -948,6 +948,55 @@ write.csv(SCTI_11654, "C11654.csv", row.names = FALSE)
 rm(data, HW_SSB_7219, HW_SSB_9175, MW_SSB_7235, RW_SSB_11654, IW_SSB_12314)
 ```
 
+# Data and preparation
+
+Put simply, and as mentioned earlier, we are trying to incorporate BCOPF into wage statistics data. With this pursuit in mind, we must acquire and prepare the data. In the former case, data scraping was applied. The lectures defined this has "automatically extracting data from web pages". This implies that we instruct R to read saved URL's in the R environment, select the HTML elements that are unique to the page and then extract those HTML elements from the page and import it into R. As a sanity check, we also downloaded the quantmod package and used the getsymbols function through "DCOILBRENTEU" to see whether the data we scraped was congruent with the data provided officially from FRED. When comparing they seem correct. The point of the scraping was to demonstrate that it is feasible. Considering that FRED provides there data, we opted to use this moving forward. 
+
+
+In the latter case, we used api_data_2 such that R communicates with SSB's API in requesting the data sets that we are interested in. Therefore, this is not a scrape. Rather, it is a API integration. The data sets that were collected through this method are 9175, 07219, 07235, 12314 & 11654. Given we have a few data sets to acquire, a for loop technique was utilized, and is consistent with the literature and lectures. The reason for the selection of these five data sets is for two reasons: coverage and data surplus. Coverage is important here because not all data sets have data points that satisfy the before, during and after a shock conditions. For example, 7218 & 7235 are data sets that cover the necessary time period for the 2014 shock; data sets 12314 and 11654 do the same for the 2020 time period. Moreover, 9175 covers the entire time period from 1995 - 2026. Data surplus was considered because we preferred having more data to dissect than too little. For transparency sake the data sets are in order of the coverage and description:
+
+- 9175: aggregate wages (1995Q1-2026Q2) 
+
+- 7219: industry level wage index (2000Q1-2018Q1) 
+
+- 7235: manufacturing wage index (2005Q1-2018Q2) 
+
+- 12314: industry wide earnings (2016Q1-2026Q2)
+
+- 11654: regional conditioned earnings (2016Q1-2026Q2)
+
+Following this acquisition stage, we cleaned the data such that it followed the workflow established earlier. We prefer long rather than wide data sets. When looking at BRENT from FRED, we could see that it was more wide than it was long. We used the pivot function, as well as reclassified the columns such that the days Monday-Friday were redefined to their respective dates. When comparing the first rows of both data frames (official FRED data and the scraped data), The conclusion is that scaping worked. All Na's were removed. This was not because the price was null. This was because there was because of lacking information.
+
+When looking at the SSB data sets, we can see that they all operate on a quarterly non-standardized frequency. Therefore to make things ready for time anchored operations, we should try to standardize. This process is mentioned in lecture 3, when transforming; in lecture 6 when it comes to how R handles dates; and in lecture 7 when working with structured data. Because we have five different data sets, we can use a for loop executable. We tell R that for every i in list SSB_metadata within the column "Tid" we replace the XXXXKX with XXXX Qx format. This is applied for all data sets. Now that we have standardized, i would like to see how many NA values there are for each data set. I also want to see what statistical significance these Na values have for each data set. To simplify things, the best course is to again use a for loop. 
+
+We can see that 9175 and 12314 have relatively low NA's counts, whereas 7219 & 7235 are totally complete. By virtue of 54% of 11654 total observations are Na, it was cleaned and reorganized such that regions with the least or no Na observations were not omitted. These were Oslo, Rogaland, Møre og Romsdal, Nordland & Trøndelag. When looking at 12314, we can see that across all petroleum industries, the data set has good coverage. We should then choose industries that have no Na's and try to compare this with the benchmark "00-99". The 9175 data set was only trimmed on the tails to match what the trims were done to the other data sets; Two years prior and two years following. 
+
+The final step was then lifting the frequency of BRENT to match the limiting factor: quarterly rate. This was achieved by taking the average of the daily price for each quarter. As we can see, we did it correctly when we compare the non transformed and the transformed BRENT. We can see this visually through figure one:
+
+## Figure One:
+
+```{r Figure one, fig.show='hold', out.width='49%', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(BRENT, aes(x = date, y = price)) + geom_line(color = "red") + 
+  labs(
+    title = "Oil Price Futures",
+    x = "Date",
+    y = "USD per barrel"
+  ) + theme_minimal()
+
+ggplot(BRENT_Q, aes(x = quarter, y = brent)) + geom_line(color = "red") + 
+  labs(
+    title = "Oil Price Futures (Quarterly)",
+    x = "Quarters",
+    y = "USD per barrel"
+  ) + theme_minimal()
+```
+
+With quarterly BRENT now accounted for with no Na values, we can proceed to understand how to interact this with what we have in the existing SSB data sets. This was done by constructing a new column that accounts for the yearly changes in wage growth, measured in the the wages of the same industry in the same quarter in the year before. Given the formulation of this year-over-year setup, Na's were to be expected. For example, in object IW_SSB_12314 there were 324 NA values for all quarters in first four quarters of the first year this is expected given our formula. Because we have 81 industries, this lines up perfectly with there being 81 x 4 = 324. When conducting this for all data sets. The NA's that occurred were consistent with this workflow. 
+
+We then proceeded with checking for 2 x observations for each data set. As the data suggests, we can see there are no 2 x observations, which means the data we have thus far satisfies transformation techniques such that the results we produce are credible. We can also continue by comparing these wage growth values with the original list data set SSB_metadata. Another sanity check was conducted when we compared the the formula we used wage_growth = (value / lag(value, 4) -1)* 100. It seems to be very consistent with SSB's own "Endring" variable.
+
+Lastly, we integrate the quarterly BRENT numbers into the existing cleaned and transformed data sets. The goal is a consistent observation of BRENT per quarter. We also created a new BRENT growth column to signify the percentage change. This follows the same notation as before but with BRENT lags instead. Following this we created then SCTI which means SSB + CLEANED + TRANSFORMED + INTEGRATED. We also integrated a new column that assigns observatons temporally to a specific classification: before, during or after. This was applied to each data set relative to their shock case. 
+
 ```{r ECONOMIC ANALYSIS, include=FALSE}
 ### 2014 OIL SHOCK
 
@@ -1435,3 +1484,17 @@ SCTI_9175 |>
 
 
 ```
+
+# Methods or Implementation
+
+# Results and evaluation
+
+# Conclusion
+
+# Use of AI tools
+
+# References
+
+Ministry of Energy & Norwegian Offshore Directorate. (2026, October 8). The government's revenues. Norwegian Petroleum. https://www.norskpetroleum.no/en/economy/governments-revenues/
+
+# Appendix

@@ -1630,7 +1630,7 @@ SCTI_9175 |>
 # Conclusion
 
 # Use of AI tools
-Generative AI tools (UiOGPT) was used as a supplementary tool to help with the R programming, debugging and improving grammar. All analytical and statistical decisions and final conclusions were reviewed by us and responsibility for the selection, methodological decisions and interpretation with given conclusions remains with us as the authors. AI was therefore used as a supplementary tool and not a substitution.
+Generative AI tools (GPTUiO) was used as a supplementary tool to help with the R programming, debugging and improving grammar. All analytical and statistical decisions and final conclusions were reviewed by us and responsibility for the selection, methodological decisions and interpretation with given conclusions remains with us as the authors. AI was therefore used as a supplementary tool and not a substitution.
 
 # References
 Ministry of Energy & Norwegian Offshore Directorate. (2026, October 8). The government's revenues. Norwegian Petroleum. https://www.norskpetroleum.no/en/economy/governments-revenues/

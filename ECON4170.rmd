@@ -1502,7 +1502,7 @@ The year-on-year growth for BRENT crude oil prices was calculated and formulated
 $$Brent_{yoy}=\left(\frac{Brent}{Brent_{t-4}}-1\right)\ast 100\ $$
 
 An argument that can be relevant in this section is that the introduciton of "frontfagsmodellen" where competition-exposed Norwegian export industries have the first right to salary negotiations, and that can affect the whole starting point of yearly salary negotiations for all industries. Salary negotiations which might be an omitted variable bias in our analysis as it accounts for wage change with respect to yearly increase in inflation or CPI-ATE yearly increase. Our analysis solely focuses on wage growth and brent crude oil prices. Another perspective could be that this “frontfagsmodellen” and salary negotiations can be seen as transaction mechanisms for the change in oil-price and profitability of export industries (NOU 2024:6). 
-This is a data science compulsory and not an economic analysis. Therefore, we have chosen not to dive deeper into this discussion as our main goal is to show capability and consistency in the way we utilize R. 
+However, this is a data science compulsory and not an economic analysis so we have chosen not to dive deeper into this discussion as our main goal is to show capability and consistency in the way we utilize R. 
 The brent crude oil prices are converted from daily to quarterly frequency by calculating the arithmetic mean of all daily observations within each given quarter. We also accounted for the calculation of the quarter-on-quarter (QoQ) percentage changes in Brent crude oil prices. 
 
 

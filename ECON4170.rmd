@@ -1569,6 +1569,7 @@ ggplot(REG_9175_06,
 The resulting model above is examined using summary() that provides residuals, coefficient estimates, standard errors, f-statistics in the console.To visualize the simple regression, ggplot() was used along with a geom_point() to display quarterly observaitons and geom_smooth() to add the fitted regression line and its confidence interval. Afterwards as a way to account for better visualization, ggsave() was used to have a specifice PNG output and size.
 \newpage
 
+
 ## Implementation of comparative visualization
 For SSB_09715 a heatmap was also created:
 
@@ -1601,7 +1602,7 @@ ggplot(SCTI_9175_sum_comp,
 
 The dataset, SCTI_9175_sum_comp, is supplemented with the English language versions of industry names using jsonlite() and generated using geom_tile() with oil price shocks displayed on the x-axis and indurestries on the y-axis. Scale_fill_gradient2() was used to indicate gradience from negative to positive differences and geom_text() was used to dislay the numerical value. 
 
-As for our wage growth plot:
+As for our wage growth plot for SSB_9175:
 
 **Figure 4.3: Industry Wages and Salary Growth and Oil Price Collapses**
 ```{r Figure 4.3, fig.show='hold', out.width='75%',fig.width= 12 , fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
@@ -1623,6 +1624,7 @@ SCTI_9175 |>
   ) +
   theme_minimal()
 ```
+The same usage of ggplot was added but along with a filter() that only used oil and gas extraction industries (pub2x06) and the service activities incidental to oil and gas (pub2x09). These two industries were distinguished using color= industry_name aesthetic mapping in ggplot2. Using geom_vline() two dashed vertical lines were added to pinpoint the start of the two oil-price shocks. 
 
 # Results and evaluation
 

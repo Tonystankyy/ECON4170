@@ -1485,16 +1485,155 @@ SCTI_9175 |>
 
 ```
 
-# Methods or Implementation
+# Method 
+
+## Research design
+This compulsory paper examines the relationship between shocks or fluctuations in Brent crude oil prices and wage Growth across Norwegian industries, particularly on the oil price shocks of 2014 and 2020. The analysis objective is to investigate and employ a descriptive, comparative time-series approach using quarterly observations. 
+This research delves into the timing and magnitude of wage growth changes surrounding the two oil-price shocks and allows us to identify differences in wage Developments between Norwegian industries and assess patterns that might emerge in both 2014 and 2020 oil-price shocks. The simple regression examines the statistical association of Norwegian wage growth and BRENT crude oil-price in the petroleum industry.
+Our analysis covers the period 2012-2017 and 2018-2022 for the 2014 and 2020 oil-price shocks. Table SSB_09175 was primarily used to study this wage growth across both oil-price shocks within the same specific industry classification.
+
+## Data sources and acquisition
+This compulsory paper relies on two primary sources extracted from Statistics Norway (SSB) and the Federal Reserve Economic Data (FRED). The SSB wage data collected are from five SSB tables: 09175, 07219, 07235, 12314 and 11654. The use of these multiple datasets allows us to compare across different Levels of industrial aggregation and between the two oil-price shocks. This is because some of the mentioned datasets provide complementary information, with other offering more granular regional detail. The SBB wage datasets are obtained through the SSB API using the installed R package PxWebApiData. This approach facilitates systematic data retrieval and reduces the need for manual downloading and processing, although some may argue that locally storing the datasets ensure for consistency. Additionally, one of the API outputs is checked against an independently downloaded Excel Version of SSB_09175 so that we can assess for correct data import. The BRENT EU crude oil prices are obtained from FRED using the quantmod package that we installed using the getsymbols() function and the series identifier DCOILBRENTEU. 
+
+## Variable construction
+The raw datasets required several processes of transformations before we proceeded with our econometric analysis. First, we standardized the quarterly data from SSB using the zoo package. The observations from different sources must be matched correctly and consistently. The raw quarterly identifiers were therefore converted into a common quarterly date format. To account for missing values, we examined the dataset, industry and regional Levels. For the datasets requiring a contruction of the wage Growth variable, we calculated a year-on-year (YoY) percentage Growth: 
+$$wage\ growth_{i,t}=\left(\frac{W_{i,t}}{W_{i,t-4}}-1\right)\ast 100$$
+Here $$W_{i,t}$$is the wage measure for industry i in quarter t and $$W_{i,t-4}$$ is the corresponding value four quarters earlier and not after. 
+Using the YoY Growth rather than the standard QoQ Growth allowed us to compare wages with the same quarter in the preceding year. This means that we reduced the recurring seasonal pattern influence. For table SSB_09175, the wage growth variable was already accounted for and therefore did not need transformation.
+The year-on-year growth for BRENT crude oil prices was calculated and formulated as such:
+$$Brent_{yoy}=\left(\frac{Brent}{Brent_{t-4}}-1\right)\ast 100\ $$
+
+An argument that can be relevant in this section is that the introduciton of "frontfagsmodellen" where competition-exposed Norwegian export industries have the first right to salary negotiations, and that can affect the whole starting point of yearly salary negotiations for all industries. Salary negotiations which might be an omitted variable bias in our analysis as it accounts for wage change with respect to yearly increase in inflation or CPI-ATE yearly increase. Our analysis solely focuses on wage growth and brent crude oil prices. Another perspective could be that this “frontfagsmodellen” and salary negotiations can be seen as transaction mechanisms for the change in oil-price and profitability of export industries (NOU 2024:6). 
+This is a data science compulsory and not an economic analysis. Therefore, we have chosen not to dive deeper into this discussion as our main goal is to show capability and consistency in the way we utilize R. 
+The brent crude oil prices are converted from daily to quarterly frequency by calculating the arithmetic mean of all daily observations within each given quarter. We also accounted for the calculation of the quarter-on-quarter (QoQ) percentage changes in Brent crude oil prices. 
+
+
+## Descriptive comparison
+In our descriptive analysis, oil-price shocks are divided into three periods: before, during and after the shock.
+The pre-shock periods in 2014 are from 2012 Q1 to 2014 Q2, the during shock period extends from 2014 Q3 to 2015 Q4, and the after periods are from 2016 Q1 to 2017 Q4. The pre-shock periods in 2020 start from 2018 Q1 to 2019 Q4, the during period encompasses 2020 Q1 to 2020 Q4 and the after periods start from 2021 Q1 to 2022 Q4. 
+The two measures for average year-on-year growth was then equated as such:
+$$\Delta 
+wag{e\ growth}_{during}=\ Average\ wage\ growth_{during}-Average\ wage\ growth_{after}$$
+
+While:
+$$\Delta
+wag{e\ growth}_{after}=\ Average\ wage\ growth_{after}-Average\ wage\ growth_{before}$$
+
+## Simple linear regression
+In our pursuit to show our capability, an ordinary least squared (OLS) regression was estimated for the oil and gas extraction industry, which had the abbreviated identification code pub2X06.
+The OLS regression was modelled as:
+$$ wage\ growth_{06=Oil\ and\ gas\ extraction\ }^{annual}=\ \alpha +\beta \ast Brent\ growth_{yoy}+\ {\varepsilon }_{t}\  $$  
+
+Where annual wage growth of Oil and gas extraction is equal to alpha plus beta multiplied by the annual percentage growth of Brent crude oil prices plus the error term at time t.
+
+
+# Implementation
+
+## Programming environment and Workflow
+Implementing the analysis in R, we installed the packages dplyr, zoo, readxl, tidyr, ggplot2, httr, jsonlite, tidyverse, PxWebApiData, rvest, quantmod and lubridate for data manipulation and visualization. The packages dplyr and tidyr are used for our data transformation, ggplot2 for the graphical regression plot and zoo packed for handling quarterly dates.  
+The R markdown divided the workflow into 5 chunks with the following order: Introduction and package installation, data acquisition, data tyding/cleaning, data transformation, and economic analysis.
+The implementation also used lecture notes to improve consistency and reduce repetitive operations for automation and efficiency. This was done using for loops to automate the retrieval of multiple datasets and functions like mutate(), filter(), group_by() and summarise() were used to prepare the observations for further analysis. 
+Finally, the last chunk proceeds with the descriptive statistics and OLS regression where results were presented as time-series plots, heatmap, and a regression scatterplot.
+
+## Data cleaning and transformation
+Following the data acquisition, the datasets acquired have undergone several cleaning and transformation procedures to ensure comparability across industries, regions and observations periods. First, the datasets were inspected using str(), head() and summary(). The results made it necessary to convert SSB datasets from non-standardized quarterly observations format to quarterly dates using gsub() and as.yearqtr(). This was made so it undergoes integration with Brent crude oil prices. 
+To account for missing observations, is.na(), group_by() and summarise() were used and these helped identify differences in data availability amongst the five SSB tables. Results from this examination show that SSB_11654 had varying coverage across Norwegian counties and tables 
+## Industry name classification
+To improve readability in our analysis, we retrieved English version industry labels from the SSB Api using jsonlite. The industry labels extracted from the API were matched to their corresponding NACE classification codes. Industry_name variable was therefore created in the integrated SSB_09175 dataset. The additional use of coalesce() preserves industry codes where an English label is unavailable. This allowed us to transform abbreviated classification codes into industry labels/names. 
+
+## Regression model construction and visualization
+The simple regression was implemented using table SSB_09175 and the quarterly BRENT oil prices, where brent_yoy was merged into the existing dataset through left_join() function. The model was then narrowed down to use NACE classification “pub2x06” which is the oil and gas extraction industry. To ensure that only valid numerical observations values were retained for both Norwegian wage growth and Brent oil price growth, is.finite() function was used. Then, nrow() is used to check the number of available observations and an if() statement is also used to prevent and evaluate if the model has fewer than three complete observations. The if() function was used along with a stop() function even though it might not seem necessary it terminates execution along with a custom error message “Not enough complete observation”.  
+The model is then estimated using lm() function:
+"lm(value ~ brent_yoy, data = REG_09175_06)"
+and gives the scatterplot:
+
+**Figure 4.1: Brent Price Growth, Wages and Salary Growth**
+```{r Figure 4.1, fig.show='hold', out.width='49%', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(REG_9175_06,
+       aes(x = brent_yoy, y = value)) +
+  geom_point(color = "blue") +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = "Brent Price Growth, Wages and Salary Growth",
+    subtitle = unique(REG_9175_06$industry_name)[1],
+    x = "Annual Brent Price Growth (%)",
+    y = "Annual Wages and Salary Growth (%)"
+  ) +
+  theme_minimal()
+```
+
+The resulting model above is examined using summary() that provides residuals, coefficient estimates, standard errors, f-statistics in the console.To visualize the simple regression, ggplot() was used along with a geom_point() to display quarterly observaitons and geom_smooth() to add the fitted regression line and its confidence interval. Afterwards as a way to account for better visualization, ggsave() was used to have a specifice PNG output and size.
+\newpage
+
+## Implementation of comparative visualization
+For SSB_09715 a heatmap was also created:
+
+**Figure 4.2: Industry Wages and Salary Growth During Oil-Price Shocks**
+```{r Figure 4.2, fig.show='hold', out.width='75%', fig.height= 14 , fig.width=12, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(SCTI_9175_sum_comp,
+                    aes(x = episode, y = industry_name, fill = during_difference)) + 
+  geom_tile(color = "white" ) +
+  geom_text( aes(label = round(during_difference, 1)), size = 3) +
+  scale_y_discrete( labels = function(x) str_wrap(x, width = 35)) +
+  scale_fill_gradient2(
+    low = "red",
+    mid = "white",
+    high = "blue",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Industry Wages and Salary Growth During Oil-Price Shocks",
+    subtitle = "Change in average growth: During minus Before",
+    x = "Oil Price Shock",
+    y = "Industry",
+    fill = "Change (pp)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10)
+  )
+
+```
+
+The dataset, SCTI_9175_sum_comp, is supplemented with the English language versions of industry names using jsonlite() and generated using geom_tile() with oil price shocks displayed on the x-axis and indurestries on the y-axis. Scale_fill_gradient2() was used to indicate gradience from negative to positive differences and geom_text() was used to dislay the numerical value. 
+
+As for our wage growth plot:
+
+**Figure 4.3: Industry Wages and Salary Growth and Oil Price Collapses**
+```{r Figure 4.3, fig.show='hold', out.width='75%',fig.width= 12 , fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+SCTI_9175 |>
+  filter(NACE %in% c("pub2X06", "pub2X09")) |>
+  ggplot(aes (x = quarter, y = value, color = industry_name)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline( yintercept = 0,linetype = "dotted") +
+  geom_vline(xintercept = as.yearqtr( "2014 Q3"),
+             linetype = "dashed", color = "red") + 
+  geom_vline(xintercept = as.yearqtr( "2020 Q1"),
+             linetype = "dashed", color = "red") + 
+  labs(
+    title = "Industry Wages and Salary Growth and Oil-Price Shocks",
+    subtitle = "2014 Q3 and 2020 Q1",
+    x = "Quarter",
+    y = "Annual Wages and Salary Growth (%)",
+    color = "Industry"
+  ) +
+  theme_minimal()
+```
 
 # Results and evaluation
+
 
 # Conclusion
 
 # Use of AI tools
+Generative AI tools (UiOGPT) was used as a supplementary tool to help with the R programming, debugging and improving grammar. All analytical and statistical decisions and final conclusions were reviewed by us and responsibility for the selection, methodological decisions and interpretation with given conclusions remains with us as the authors. AI was therefore used as a supplementary tool and not a substitution.
 
 # References
-
 Ministry of Energy & Norwegian Offshore Directorate. (2026, October 8). The government's revenues. Norwegian Petroleum. https://www.norskpetroleum.no/en/economy/governments-revenues/
+NOU 2024:6 (2024). Grunnnlaget for inntektsoppgjørene 2024, 4 Frontfagsmodellen. Arbeids- og inkluderingsdepartementet. https://www.regjeringen.no/no/dokumenter/nou-2024-6/id3031371/
 
 # Appendix

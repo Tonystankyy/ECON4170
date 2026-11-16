@@ -948,7 +948,7 @@ rm(data, HW_SSB_7219, HW_SSB_9175, MW_SSB_7235, RW_SSB_11654, IW_SSB_12314)
 
 # Data and preparation
 
-We must acquire and prepare the relevant data. The former involves data scraping and API integration. The lectures define scraping as "automatically extracting data from web pages". R is instructed to read a saved URL, select the HTML elements that are unique to the page and then extract them and import. A sanity check was performed when applying 'quantmod' and 'DCOILBRENTEU' to see whether the data we scraped was congruent with the data provided officially from FRED. The comparison proved successful. While scraping was practically feasible, FRED's data was opted given its official package implementation (U.S. Energy Information Administration, 2026)
+We must acquire and prepare the relevant data. The former involves data scraping and API integration. The lectures define scraping as "automatically extracting data from web pages" (Hammersmark, 2026). R is instructed to read a saved URL, select the HTML elements that are unique to the page and then extract them and import. A sanity check was performed when applying 'quantmod' and 'DCOILBRENTEU' to see whether the data we scraped was congruent with the data provided officially from FRED. The comparison proved successful. While scraping was practically feasible, FRED's data was opted given its official package implementation (U.S. Energy Information Administration, 2026)
 
 The acquiring of SSB data sets relied on the application of 'api_data_2'. Here, R communicates with SSB's API in requesting the data sets that we are interested in. The data sets that were collected through this method are 9175, 07219, 07235, 12314 & 11654. A for loop function was applied. The reason for the selection of these five data sets is for two reasons: coverage and data surplus. Coverage is important here because not all data sets have data points that satisfy the YoY condition. For example, 7219 & 7235 are data sets that cover the necessary time period for the 2014 shock; data sets 12314 and 11654 do the same for the 2020 time period. Moreover, 9175 covers the entire time period from 1995 - 2026. Data surplus was considered because we preferred having more data to dissect than too little.
 
@@ -1649,4 +1649,8 @@ Statistics Norway. (2026). Table 11654: Employees, jobs, earnings, and earnings 
 
 U.S. Energy Information Administration. (n.d.). Crude oil prices: Brent – Europe (DCOILBRENTEU). Federal Reserve Bank of St. Louis. https://fred.stlouisfed.org/series/DCOILBRENTEU
 
+Hammersmark, E. M.(2026, September 23). Lecture 6: Working with data (PowerPoint Slides). University of Oslo. 
+
 # Appendix
+
+Check own document for appendix

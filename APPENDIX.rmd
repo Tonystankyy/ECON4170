@@ -1,0 +1,1522 @@
+---
+title: 'Wage Growth Dynamics Following 2014 & 2020 Oil Price Collapses'
+subtitle: 'APPENDIX'
+date: "2026-11-17"
+output:
+  pdf_document:
+    toc_depth: 3   
+    number_sections: true
+fontsize: 11pt
+geometry: margin=1in
+---
+Candidate Number One: 170104 \hfill Candidate Number Two: 170116
+
+\pagenumbering{gobble}
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\bigskip
+
+\begin{center}
+\textbf{Abstract}
+\end{center}
+
+This document serves as a complimentary work to the main research paper. Here you can find accompany graphs and visualizations with larger scale. 
+
+\clearpage
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+```{r PACKAGES, include=FALSE}
+rm(list = ls()) #removes all code
+
+required <- c(
+  "readxl", "readr", "dplyr", "tidyr", "stringr",
+  "lubridate", "ggplot2", "broom", "httr2", "jsonlite", "PxWebApiData", "quantmod", "zoo"
+)
+new.packages <- required[!(required %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(dplyr)
+library(zoo)
+library(readxl)
+library(tidyr)
+library(ggplot2)
+library(httr2)
+library(jsonlite)
+library(tidyverse)
+library(PxWebApiData)
+library(rvest)
+library(quantmod)
+library(lubridate)
+
+set.seed(1234567)
+```
+
+# ACQUISITION
+
+```{r ACQUISITION, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
+
+## SSB API interaction:
+
+# SSB 09175. We start with this one because it has the most coverage. 
+
+SSB_09175 <- api_data_2(
+  9175, # name of the table we are seeking to acquire.
+  default_query = TRUE # specifying that all cells of metadata are included.
+) # api_data_2() interacts with SSB API such that all
+  # category nodes are preserved.
+
+k09175 <- read_excel("09175.xlsx")
+
+str(SSB_09175) # here we can see that this data-set is long. with 154 224 
+               # rows across 5 columns
+
+str(k09175) # here we can see that this data-set is very wide. There are 85 rows 
+            # but with 3025 columns. 
+
+# the purpose of downloading the xlsx file was to demonstrate and sanity check
+# if the api interaction was correct. When comparing the str() of both, API
+# data-set seems satisfactory. 
+
+# For loop construction. The reasoning is simple: iteration. We have tested
+# that the code above worked for the individual case. Now instead of copy 
+# pasting five times, we can create a more sophisticated acquisition process. 
+
+rm(k09175,SSB_09175) # start with clean slate. 
+
+tables <- c(9175, 07219, 07235, 12314, 11654) # the name of each table.
+
+SSB_metadata <- list() # empty list to store the metadata acquired. 
+
+for (i in seq_along(tables)) {
+  SSB_metadata[[i]] <- api_data_2(
+    tables[i],
+    default_query = TRUE
+  )
+} # we tell R that for every id in 'tables', we execute the api_data_2 function 
+  # such that it acquires the relevant table metadata by communicating with 
+  # SSB API. It then places these values in the list function we created
+  # then after having done that for all the sets, we then rename these columns
+  # to their original names already defined in order in 'tables'. 
+
+names(SSB_metadata) <- tables # the order of the data frames is consistent
+                              # with the order of the SSB tables in 'tables'.
+                              # therefore, we can refer to each data directly
+                              # through the list.
+
+SSB_metadata[1] # refers to SSB table 9175 in the SSB_metadata list as [1].
+
+for (id in names(SSB_metadata)) {
+  assign(paste0("SSB_", id), SSB_metadata[[id]])
+} # we know have extract each of the tables in a meaningful and understandable 
+  # way. 
+
+
+SSB_datasets <- c("SSB_9175", "SSB_7235", "SSB_7219", "SSB_12314", "SSB_11654")
+# we create a new vector with the "" names of all data sets
+for (i in SSB_datasets) {
+  write.csv(get(i), paste0(i, ".csv"), row.names = FALSE)
+}
+# we make a for loop that downloads all of these for future reference.
+
+
+## BRENT scrape
+
+brent_url <- "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=RBRTE&f=D"
+# we download the actual URL where the information is stored in the HTML
+
+BRENT <- read_html(brent_url) |>
+  html_elements("table") |>
+  html_table(fill = TRUE) # we download and scrape each observation
+                          # through the inspect tool in HTML. Here we can 
+                          # specify exactly what we want, which is the oil price
+
+
+BRENT <- BRENT[[6]] # the specific time table we are interest in for all time 
+
+str(BRENT) # overview to inspect the actual data frame. We can see that the date
+           # is slightly too wide, and the data is organized in a messy way. This
+           # is because of the weeks instead of simply daily observations. 
+
+head(BRENT) # the aforementioned is supported when looking at the first six rows
+```
+
+```{r SANITY CHECK FRED, include=FALSE, eval=FALSE}
+BRENT1F <- getSymbols(
+  "DCOILBRENTEU",
+  src = "FRED",
+  auto.assign = FALSE
+) # the point of this is to determine whether the scrape produced the same data
+  # as the official, literature supported, downloading of FRED oil prices.
+  # This approach failed with rendering, so we opted for the simpler read.csv
+  # should have the same output. 
+
+rm(BRENT1F)
+
+```
+
+```{r ACQUISITION 2, cache=TRUE, message=FALSE, include=FALSE, warning=FALSE}
+
+BRENT1 <- read.csv(
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
+  na = "."
+)
+
+str(BRENT1)
+
+head(BRENT1) 
+
+# here we have a very long and cleaner data set. More on this later
+
+BRENT1 <- data.frame(
+  date = BRENT1$observation_date,
+  price = BRENT1$DCOILBRENTEU
+)
+
+rm(brent_url, tables, SSB_datasets)
+```
+
+# CLEANING
+
+```{r CLEANING, include=FALSE}
+
+## BRENT
+
+BRENT_DAILY <- BRENT |>
+  pivot_longer(Mon:Fri, names_to = "day", values_to = "oil_price") |>
+  mutate(
+    week = ymd(str_extract(`Week Of`, "^\\d{4} [A-Za-z]+-\\s*\\d+")),
+    date = week + match(day, c("Mon", "Tue", "Wed", "Thu", "Fri")) -1
+  ) |>
+  select(date, oil_price) |>
+  drop_na() |>
+  arrange(date) # we know that the scraped BRENt was very messy, and too wide. 
+                # we know remove the first column, and assign it date values
+                # relative to the already established columns for the names
+                # of each day of the weak. This is then pivoted, such that it is
+                # descending relative from oldest to newest derived from the
+                # dates and their numbers within each week. The second column
+                # follows this pivot, but represents each oil price value assigned
+
+head(BRENT_DAILY)
+
+head(BRENT1)
+
+tail(BRENT_DAILY)
+
+tail(BRENT1)
+
+sum(is.na(BRENT1))
+
+BRENT1 <- na.omit(BRENT1)
+
+# when comparing the first rows of both data frames. The conclusion is that
+# scaping worked. With that said, this paper will opt to use the quantmod 
+# FRED output given the extra sensitivity of the variables (one extra decimal)
+# all NA's were removed. Therefore BRENT is the current object we will use.
+
+BRENT <- BRENT1 
+
+sum(is.na(BRENT))
+
+BRENT1 <- na.omit(BRENT)
+
+rm(BRENT_DAILY, BRENT1)
+
+str(BRENT)
+
+head(BRENT)
+
+tail(BRENT)
+
+BRENT$date <- as.Date(BRENT$date)
+
+ggplot(BRENT, aes(x = date, y = price)) + geom_line(color = "red") + 
+  labs(
+    title = "TEST",
+    x = "Date",
+    y = "USD per barrel"
+  ) + theme_minimal() # the point of this illustration is to sanity check 
+                      # whether the data points provided match what is observed
+                      # through the URL retrieved from earlier. As we can, if
+                      # we compare these two graphs, they are identical. 
+
+## SSB cleaning (in order)
+
+str(SSB_11654)
+
+str(SSB_12314)
+
+str(SSB_7219)
+
+str(SSB_7235)
+
+str(SSB_9175)
+
+# We can see that all data sets operate on a quarterly non-standardized frequency
+# to make things more ready for time anchored operations, we should try to 
+# standardize. This process is mentioned in lecture 3, when transforming; in
+# lecture 6 when it comes to how R handles dates; and in lecture 7 when working 
+# with structured data. Because we have five different data sets, we can 
+# use a for loop executable:
+
+class(SSB_metadata)
+
+for (i in names(SSB_metadata)) {
+  SSB_metadata[[i]] <- SSB_metadata[[i]] |>
+    mutate(
+      quarter = as.yearqtr(
+        gsub("K", " Q", Tid),
+        format = "%Y Q%q"
+      )
+    )
+} # we tell r that for every i in SSB_metadata for each data set within the 
+  # column "Tid" we replace the XXXXKX with XXXX Qx format. 
+
+SSB_metadata[1] # we can see that the standardization effort worked with the 
+                # addition of another variable "quarter"
+
+# now that we have standardized, i would like to see how many NA values there
+# are for each data set. I also want to see what statistical significance these
+# NA values have for each data set. To simplify things, the best course is to
+# again use a for loop. 
+
+for (i in names(SSB_metadata)) {
+  print(paste(
+        i,
+        round(mean(is.na(SSB_metadata[[i]]$value)) * 100, 2), 
+        "%"))
+}
+
+# here we can see that the data set with the largest share of NA's is SSB_11654.
+# Because we do not know which variable contains these NA's, we should do more
+# investigative work 
+
+for (i in names(SSB_metadata)) {
+  print(
+    SSB_metadata[[i]] |>
+      group_by(ContentsCode) |>
+      summarise(
+        missing = sum(is.na(value)),
+        percentage = mean(is.na(value)) * 100
+      )
+  )
+}
+
+# we can see that 9175 and 12314 have relatively low NA's counts, whereas
+# 7219 & 7235 are totally complete. By virtue of 54% of 11654 is NA in terms of 
+# the wage observations are missing, we should try to clean this one first. 
+# We then need to understand if these NA's are of a statistical nature, or 
+# if they are omitted for other reasons. The simple route would be to simply 
+# NA omit everything, but before doing anything, it is important to see what is 
+# the cause. This is in line with the lectures. 
+
+SSB_metadata[["11654"]] |>
+  filter(ContentsCode == "GjAvtaltMdlonn") |> 
+  group_by(Region) |>
+  summarise(
+    missing = sum(is.na(value)),
+    percentage = mean(is.na(value)) * 100
+  ) |> 
+  print(n = Inf)
+
+# we can see that for counties (fylker) currently existing, and that had not 
+# undergone a change in county structure, exhibit the fewest NA's. This is 
+# important to consider because it could explain the variation in the NA's
+# across counties. 
+
+
+SSB_metadata[["11654"]] |>
+  filter(ContentsCode == "GjAvtaltMdlonn",
+         !is.na(value)
+         ) |> 
+  group_by(Region) |>
+  summarise(
+    first = min(quarter),
+    last = max(quarter)
+  ) |> 
+  print(n = Inf)
+
+# we can see that regions 03, 11, 15 & 18 have nearly full or full coverage 
+# from the start to
+# the end of the sample. These are Oslo, Rogaland, Møre og Romsdal and Nordland, 
+# respectively. 
+
+SSB_metadata[["11654"]] |>
+  filter(ContentsCode == "GjAvtaltMdlonn",
+         quarter >= 2018,
+         quarter < 2023
+  ) |> 
+  group_by(Region) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value)),
+    percentage = mean(!is.na(value)) * 100
+  ) |> 
+  print(n = Inf)
+
+# the data shows that the countie politics of aggregation and seperation had
+# massive disruptions in the availability of data. If we want to see NA's by 
+# industry per the counties we are interest in, we can run another for loop
+
+SSB_metadata[["11654"]] |>
+  filter(Region %in% c("03", "11", "15", "18", "50"),
+         ContentsCode == "GjAvtaltMdlonn",
+         quarter >= 2018,
+         quarter < 2023
+  ) |> 
+  group_by(Region, NACE2007) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value)),
+    .groups = "drop"
+  ) |> 
+  print(n = Inf)
+
+# among the aforementioned counties we are interest in, all have continuous 
+# wage observations needed for all the major industries were are concerned with 
+# this is in relation to the set boundary of 2018 Q1, on the left tail, and
+# 2023 Q4, on the right. 
+
+RW_SSB_11654 <- SSB_metadata[["11654"]] |>
+  filter(
+    Region %in% c("03", "11", "15", "18", "50"),
+    ContentsCode == "GjAvtaltMdlonn",
+    NACE2007 != "00",
+    NACE2007 != "00-99",
+    quarter >= 2018, 
+    quarter < 2023
+  ) |> 
+  select(Region, NACE2007, quarter, value) # we have now cleaned the 11654 
+                                           # and reorganized the data such that
+                                           # the aforementioned regions, adding
+                                           # Trondheim, have been selected for 
+                                           # all major industries. This means 
+                                           # we can now compare how wages were  
+                                           # before, during and after the 2020
+                                           # oil price shock
+
+str(RW_SSB_11654)
+dim(RW_SSB_11654)
+sum(is.na(RW_SSB_11654$value)) # no NA's now
+
+# we can no proceed with SSB_12314
+
+str(SSB_metadata[4])
+
+# let us try to find NA's
+
+
+SSB_metadata[["12314"]] |>
+  filter(ContentsCode == "GjAvtaltMdlonn",
+         quarter >= 2018,
+         quarter < 2023
+         ) |> 
+  group_by(NACE2007) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value))
+  ) |> 
+  print(n = Inf)
+
+# we can see that across all petroleum industries, the data set has good 
+# coverage. We should then choose industries that have no Na's and try to compare
+# this with the benchmark "00-99"
+
+IW_SSB_12314 <- SSB_metadata[["12314"]] |>
+  filter(
+    ContentsCode == "GjAvtaltMdlonn",
+    quarter >= 2018,
+    quarter < 2023,
+    !NACE2007 %in% c("00", "00-99"),
+    !is.na(value)
+  ) |>
+  group_by(NACE2007) |>
+             filter(n() == 20) |>
+             ungroup() |>
+             select(NACE2007, quarter, value)
+  
+str(IW_SSB_12314) # cleaned SSB_12314, where we have 81 industries across
+                  # 20 quarters 
+
+sum(is.na(IW_SSB_12314$value)) # no NA's
+
+# we can now proceed with 7219 
+
+str(SSB_metadata[2])
+
+SSB_metadata[["7219"]] |>
+  filter(
+         quarter >= 2011,
+         quarter < 2018
+  ) |> 
+  group_by(NACE, ContentsCode) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value)),
+    .groups = "drop"
+  ) |> 
+  print(n = Inf) # good coverage across the set 
+
+HW_SSB_7219 <- SSB_metadata[["7219"]] |> 
+  filter(
+    ContentsCode == "Indeks",
+    quarter >= 2011,
+    quarter < 2018
+  ) |> 
+  select(NACE, quarter, value) # we selected the "indeks" only classification
+                               # this is because monthly wage data is perhaps
+                               # more sensitive to oil price shocks
+
+str(HW_SSB_7219)
+
+sum(is.na(HW_SSB_7219$value)) # no NA's
+
+
+# We can now move onto the next data set, 7235
+
+str(SSB_metadata[3])
+
+SSB_metadata[["7235"]] |>
+  filter(
+    quarter >= 2011,
+    quarter < 2018
+  ) |> 
+  group_by(NACE2007, ContentsCode) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value)),
+    .groups = "drop"
+  ) |> 
+  print(n = Inf) # again good coverage
+
+
+MW_SSB_7235 <- SSB_metadata[["7235"]] |> 
+  filter(
+    ContentsCode == "Indeks",
+    quarter >= 2011,
+    quarter < 2018
+  ) |> 
+  select(NACE2007, quarter, value) # we follow the same convention with "indeks"
+                                   # because we are want a comparison point with
+                                   # 7219 with monthly wage sensitiviy. 
+
+str(MW_SSB_7235)
+
+sum(is.na(MW_SSB_7235$value))
+
+# we can now move on with 9175
+
+str(SSB_metadata[1])
+
+SSB_metadata[["9175"]] |>
+  filter(ContentsCode == "LonnProsent") |> 
+  group_by(NACE) |>
+  summarise(
+    available = sum(!is.na(value)),
+    missing = sum(is.na(value)),
+  ) |> 
+  print(n = Inf) # given the large coverage of the data set, and considering, 
+                 # we are looking at 2014 and 2020, we might want to trim the
+                 # left tail such that it starts 2012 Q1. We should then be left
+                 # with 44 quarters. 
+
+
+HW_SSB_9175 <- SSB_metadata[["9175"]] |> 
+  filter(
+    ContentsCode == "LonnProsent",
+    quarter >= 2012,
+    quarter < 2023,
+    !is.na(value)
+  ) |> 
+  group_by(NACE) |> 
+  filter(n() == 44) |>
+  ungroup() |>
+  select(NACE, quarter, value) 
+
+str(HW_SSB_9175)
+
+sum(is.na(HW_SSB_9175$value))
+```
+
+# TRANSFORMATION
+
+```{r TRANSFORMATION, include=FALSE}
+
+## Brent 
+
+# All of the SSB cleaned data sets are operating on a quarterly frequency. 
+# this means that we need to scale up BRENT's frequency to match the limiting
+# factor. 
+
+BRENT_Q <- BRENT |> 
+  mutate(quarter = as.yearqtr(date)) |>
+  group_by(quarter) |>
+  summarise(
+    brent = mean(price, na.rm = TRUE)
+  )
+
+str(BRENT_Q)
+
+sum(is.na(BRENT_Q$brent))
+
+ggplot(BRENT_Q, aes(x = quarter, y = brent)) + geom_line(color = "red") + 
+  labs(
+    title = "Quarterly BRENT",
+    x = "Quarters",
+    y = "USD per barrel"
+  ) + theme_minimal() # looks very similar to the already used GGPLOT with daily
+                      # oil prices. 
+
+## SSB 12314
+
+# with quarterly brent now accounted for with no NA values, we can proceed to 
+# understand how to interact this with what we have in the existing SSB
+# data sets. If we look at IW_SSB_12314, we can construct a new column that 
+# accounts for the yearly changes in wage growth, measured in the the wages
+# of the same industry in the same quarter in the year before. 
+
+IW_SSB_12314 <- IW_SSB_12314 |> 
+  group_by(NACE2007) |> 
+  arrange(quarter, .by_group = TRUE) |> 
+  mutate(
+    wage_growth = (value / lag(value, 4) - 1) * 100 # this is the formula
+  ) |> 
+  ungroup()
+
+str(IW_SSB_12314)
+
+summary(IW_SSB_12314$wage_growth)
+
+sum(is.na(IW_SSB_12314$wage_growth)) # 324 NA values for all quarters in the 
+                                     # first four quarters of the first year
+                                     # this is expected given our formula. 
+                                     # because we have 81 industries, this lines
+                                     # up perfectly with there being 81 x 4 = 
+                                     # 324
+
+IW_SSB_12314 |> 
+  count(NACE2007, quarter) |>
+  filter(n != 1) # every industry has one observation per quarter
+
+
+## SSB 11654
+
+RW_SSB_11654 <- RW_SSB_11654 |> 
+  group_by(Region, NACE2007) |>
+  arrange(quarter, .by_group = TRUE) |> 
+  mutate(
+    wage_growth = (value / lag(value, 4) -1 ) * 100 # formula notation
+  ) |>
+  ungroup()
+
+str(RW_SSB_11654)
+
+summary(RW_SSB_11654)
+
+sum(is.na(RW_SSB_11654$wage_growth)) # now we are looking at the regional level
+                                     # and because we have 16 industries (we 
+                                     # we removed two) across 5 different counties
+                                     # through 20 quarters. 16 * 4 * 5 = 320
+
+
+## SSB 7219
+
+HW_SSB_7219 <- HW_SSB_7219 |> 
+  group_by(NACE) |> 
+  arrange(quarter, .by_group = TRUE) |> 
+  mutate(
+    wage_growth = (value / lag(value, 4) -1)* 100
+  ) |> 
+  ungroup() # wage index growth column being added
+
+str(HW_SSB_7219)
+
+summary(HW_SSB_7219)
+
+sum(is.na(HW_SSB_7219$wage_growth)) # because we have 16 industries, there will
+                                    # will be missing values for each one 
+                                    # in the starting year; 16 * 4  = 64
+
+## SSB 7235
+
+MW_SSB_7235 <- MW_SSB_7235 |> 
+  group_by(NACE2007) |> 
+  arrange(quarter, .by_group = TRUE) |> 
+  mutate(
+    wage_growth = (value / lag(value, 4) -1) * 100 # formula
+  ) |> 
+  ungroup()
+
+str(MW_SSB_7235)
+
+summary(MW_SSB_7235)
+
+sum(is.na(MW_SSB_7235$wage_growth)) # 17 industries x 4 missing NA = 68
+
+
+## SSB 9175 
+
+str(HW_SSB_9175) # because in SSB_9175 wage growth is already accounted for,
+                 # we do not need to conduct the same transformations 
+                 # as all the other data sets
+
+## final transformations
+
+# let us look at whether there exists any large values in either direction 
+
+summary(IW_SSB_12314$wage_growth)
+
+summary(RW_SSB_11654$wage_growth)
+
+summary(HW_SSB_7219$wage_growth)
+
+summary(MW_SSB_7235$wage_growth)
+
+# nothing stands out as being extreme (sanity check)
+
+# we can proceed with checking if there are any instances where there exists
+# 2 x obersvations 
+
+IW_SSB_12314 |>
+  count(NACE2007, quarter) |>
+  filter(n > 1)
+
+RW_SSB_11654 |>
+  count(Region, NACE2007, quarter) |>
+  filter(n > 1)
+
+HW_SSB_7219 |>
+  count(NACE, quarter) |>
+  filter(n > 1)
+
+MW_SSB_7235 |>
+  count(NACE2007, quarter) |>
+  filter(n > 1)
+
+# as we can see there are no 2 x observations, which means the data we have 
+# thus far satisfies transformation techniques such that the results we produce
+# are credible. We can also continue by comparing these wage growth values with
+# the orginal list data set SSB_metadata
+
+SSB_metadata_GROWTH <- SSB_metadata[["7219"]] |>
+  filter(ContentsCode == "Endring") |> 
+  select(NACE, quarter, value) |>
+  rename(SSB_metadata_GROWTH = value)
+
+summary(SSB_metadata_GROWTH)
+
+# now we compare the calculated changes with what is published by SSB. This is
+# given through the "indeks" column and that, which contains the growth figures 
+# published by SSB, and what we have caluclated through the formula
+# is similar to this. 
+
+compare_7219 <- HW_SSB_7219 |>
+  left_join(SSB_metadata_GROWTH, by = c("NACE", "quarter")) |>
+  mutate(
+    difference = wage_growth - SSB_metadata_GROWTH
+  )
+
+summary(compare_7219$difference)
+
+max(abs(compare_7219$difference), na.rm = TRUE)
+
+head(compare_7219)
+
+# as we can see the formula we used wage_growth = (value / lag(value, 4) -1)* 100
+# seems to be very consistent with SSB's own "Endring" variable 
+
+SSB_metadata_GROWTH <- SSB_metadata[["7235"]] |>
+  filter(ContentsCode == "Endring") |> 
+  select(NACE2007, quarter, value) |>
+  rename(SSB_metadata_GROWTH = value)
+
+compare_7235 <- MW_SSB_7235 |>
+  left_join(SSB_metadata_GROWTH, by = c("NACE2007", "quarter")) |>
+  mutate(
+    difference = wage_growth - SSB_metadata_GROWTH
+  )
+
+summary(compare_7235$difference)
+
+max(abs(compare_7235$difference), na.rm = TRUE)
+
+head(compare_7235)
+
+# while low values, we can see that compare_7235 > compare_7219. We can see if 
+# the ten largest differences are noteworthy. It could seem that the reports
+# from SSB_metadata were rounded up, which could explain why the difference 
+# was greater in the latter, than the former data set. 
+
+compare_7235 |>
+  filter(!is.na(difference)) |>
+  arrange(desc(abs(difference))) |>
+  select(NACE2007, quarter, wage_growth,
+         SSB_metadata_GROWTH, difference) |>
+  head(10)
+
+# the wage growth variables in 7235 and 7219 seem satisfactory in terms of their
+# validity. 
+
+# we can continue with the other two variables, but it is important to highlight
+# that while we use the same formula in transforming, there is no public indicy
+# wrt. these wage growth numbers on the same "level" as what we have calculated
+# already. Despite this, and because we have checked for duplicates, and the 
+# NA values, these two latter data sets 12314 and 11654 seem satisfactory. 
+
+rm(SSB_metadata_GROWTH, SSB_11654, SSB_12314, SSB_7219, SSB_7235, SSB_9175, 
+   compare_7219, compare_7235)
+
+#### BRENT INTEGRATION ####
+
+# we integrate the quarterly brent numbers into the existing cleaned and
+# transformed data sets. The goal is a consistent obersvation of brent per quarter
+# we are assuming no duplicates, but we can check by:
+
+BRENT_Q |>
+  count(quarter) |>
+  filter(n > 1) # zero rows -> no duplicates
+
+range(BRENT_Q$quarter) # both tails more than capable to adapt to each data set
+
+# let us also add a percentage change column to quarterly brent prices
+
+BRENT_Q <- BRENT_Q |>
+  arrange(quarter) |>
+  mutate(
+    brent_growth = (brent / lag(brent) - 1) * 100
+  )
+
+str(BRENT_Q) # new column added
+
+sum(is.na(BRENT_Q$brent_growth)) # to be expected given what has already been
+                                 # established
+# to simplify the integration process, we should create the same list object
+# that we started off with in SSB_metadata, but now with the cleaned and 
+# transformed data sets. 
+
+data <- list(
+  "12314" = IW_SSB_12314,
+  "11654" = RW_SSB_11654,
+  "7219" = HW_SSB_7219,
+  "7235" = MW_SSB_7235,
+  "9175" = HW_SSB_9175
+)
+
+str(data) # it worked
+
+SSB_CLE_TRA <- list()
+
+for(i in names(data)) {
+  SSB_CLE_TRA[[i]] <- data[[i]] |>
+    left_join(BRENT_Q, by = "quarter")
+} # we integrate brent quarterly into the existing cleaned and transformed
+  # data sets. 
+
+head(SSB_CLE_TRA[["12314"]])
+
+head(SSB_CLE_TRA[["11654"]])
+
+head(SSB_CLE_TRA[["7219"]])
+
+head(SSB_CLE_TRA[["7235"]])
+
+head(SSB_CLE_TRA[["9175"]])
+
+for (i in names(SSB_CLE_TRA)) {
+  assign(
+    paste0("SCTI_", i),
+    SSB_CLE_TRA[[i]]
+  )
+} # SCTI = SSB + CLEANED + TRANSFORMED + INTEGRATED
+
+SCTI_7219 <- SCTI_7219 |>
+  filter(quarter >= 2012, quarter < 2018)
+
+SCTI_7219 <- SCTI_7219 |>
+  mutate(
+    period = case_when(
+      quarter < as.yearqtr("2014 Q3") ~ "Before",
+      quarter < as.yearqtr("2016 Q1") ~ "During",
+      TRUE ~ "After"
+    )
+  ) # classified the data given their temporal anchoring 
+    # with these we can continue with undertanding the before, during and after the
+    # oil price collapse. 
+
+
+SCTI_7235 <- SCTI_7235 |>
+  filter(quarter >= 2012, quarter < 2018)
+
+SCTI_7235 <- SCTI_7235 |>
+  mutate(
+    period = case_when(
+      quarter < as.yearqtr("2014 Q3") ~ "Before",
+      quarter < as.yearqtr("2016 Q1") ~ "During",
+      TRUE ~ "After"
+    )
+  ) # classified the data given their temporal anchoring 
+# with these we can continue with undertanding the before, during and after the
+# oil price collapse. 
+
+SCTI_9175 <- SCTI_9175 |>
+  filter(quarter >= 2012, quarter < 2023)
+
+SCTI_9175 <- SCTI_9175 |> 
+  mutate(
+    episode = case_when(
+      quarter < zoo::as.yearqtr("2018 Q1", format = "%Y Q%q") ~ "2014 collapse",
+      TRUE ~ "2020 collapse"
+    )
+  )
+
+
+SCTI_12314 <- SCTI_12314 |>
+  filter(quarter >= 2018, quarter < 2023)
+
+SCTI_12314 <- SCTI_12314 |> 
+  mutate(
+    period = case_when(
+      quarter < zoo::as.yearqtr("2020 Q1", format = "%Y Q%q") ~ "Before",
+      quarter < zoo::as.yearqtr("2021 Q1", format = "%Y Q%q") ~ "During",
+      TRUE ~ "After"
+    )
+  )
+
+
+SCTI_11654 <- SCTI_11654 |>
+  filter(quarter >= 2018, quarter < 2023)
+
+SCTI_11654 <- SCTI_11654 |> 
+  mutate(
+    period = case_when(
+      quarter < zoo::as.yearqtr("2020 Q1", format = "%Y Q%q") ~ "Before",
+      quarter < zoo::as.yearqtr("2021 Q1", format = "%Y Q%q") ~ "During",
+      TRUE ~ "After"
+    )
+  )
+
+
+
+write.csv(SCTI_7219, "C7219.csv", row.names = FALSE)
+
+write.csv(SCTI_7235, "C7235.csv", row.names = FALSE)
+
+write.csv(SCTI_9175, "C9175.csv", row.names = FALSE)
+
+write.csv(SCTI_12314, "C12314.csv", row.names = FALSE)
+
+write.csv(SCTI_11654, "C11654.csv", row.names = FALSE)
+
+
+
+
+
+rm(data, HW_SSB_7219, HW_SSB_9175, MW_SSB_7235, RW_SSB_11654, IW_SSB_12314)
+```
+
+# ECONOMIIC ANALYSIS
+
+```{r ECONOMIC ANALYSIS, include=FALSE}
+### 2014 OIL SHOCK
+
+## 7219
+
+
+SCTI_7219 |>
+  distinct(quarter, brent) |>
+  ggplot(aes(x = quarter, y = brent)) + geom_line(linewidth = 1) +
+  labs( 
+    title = "SCTI 7219 & BRENT",
+    x = "Quarter",
+    y = "USD per barrel"
+    ) +
+  theme_minimal() # shows the brent quarterly price development for all industries
+
+SCTI_7219 |>
+  ggplot(aes(x = quarter, y = wage_growth,
+             group = NACE, color = NACE)) +
+  geom_line() + 
+  labs(
+    title = "Industry Wage Growth",
+    x = "Quarter",
+    y = "Formula YoY Wage Growth (%)"
+  ) +
+  theme_minimal()
+                                                  
+SCTI_7219_plot <- SCTI_7219 |>
+  group_by(NACE) |>
+  mutate(
+    wage_scaled = as.numeric(scale(wage_growth)),
+    brent_scaled = as.numeric(scale(brent))
+  ) |>
+  ungroup()
+  
+  
+ggplot(SCTI_7219_plot, aes(x = quarter)) +
+  geom_line(aes(y = wage_scaled, color = "Wage Growth")) +
+  geom_line(aes(y = brent_scaled, color = "Brent")) +
+  facet_wrap(~ NACE) + 
+  scale_color_manual(
+    values = c("Wage Growth" = "black", "Brent" = "Red")
+  ) +
+  labs(
+    title = "Intra-industry Wage Growth and Brent Prices",
+    subtitle = "2012-2017 (7219)",
+    x = "Quarter",
+    y = "Standardized value", 
+    color = "Variable"
+  ) +
+  theme_minimal() # we are not looking at percentage changes in wage growth or 
+                  # oil prices, we are looking at standardized wage growth 
+                  # relative to Brent price levels. A value of zero represents 
+                  # relative averages, and one unit differences are equal in size
+                  # to standard deviations.
+
+SCTI_7219 |>
+  ggplot(aes(x = quarter, y = wage_growth)) + 
+  geom_line() + 
+  geom_vline(
+    xintercept = zoo::as.yearqtr("2014 Q3"),
+    linetype = "dashed",
+    color = "red"
+  ) + facet_wrap(~ NACE) + 
+  labs(
+    title = "Intra-industry Wage Growth at the time of 2014 Brent Price collapse",
+    subtitle = "2014 Q3 is dashed demarcation (7219)",
+    x = "Quarter",
+    y = "Formula YoY Wage Growth (%)", 
+  ) +
+  theme_minimal()
+
+
+SCTI_7219_summary <- SCTI_7219 |> 
+  group_by(NACE, period) |>
+  summarise(
+    avg_growth = mean(wage_growth, na.rm = TRUE),
+    .groups = "drop"
+  ) # created a summary following these anchnorings
+                                                  
+SCTI_7219_summary                                                  
+                                                  
+ggplot(SCTI_7219_summary,
+       aes(x = period, y = avg_growth)) +
+  geom_col() +
+  facet_wrap(~ NACE) + 
+  scale_x_discrete(limits = c("Before", "During", "After")) +
+  labs(
+    title = "Mean-Intra-Industry Wage Growth during 2014 Oil Price Collapse",
+    subtitle = "Data from 2012-2017 (7219)",
+    x = "Period",
+    y = "Average YoY wage growth (%)"
+  ) + 
+  theme_minimal() # bars showing how annual wages changed given their periods
+
+
+SCTI_7219_sum_comp <- SCTI_7219_summary |>
+  pivot_wider(
+    names_from = period,
+    values_from = avg_growth
+  ) |>
+  mutate(
+    during_difference = During - Before, 
+    after_difference = After- Before
+  ) # shows us the differences between the different periods
+                               
+SCTI_7219_sum_comp
+                                                  
+## 7235
+
+SCTI_7235_plot <- SCTI_7235 |>
+  group_by(NACE2007) |>
+  mutate(
+    wage_scaled = as.numeric(scale(wage_growth)),
+    brent_scaled = as.numeric(scale(brent))
+  ) |>
+  ungroup()
+
+ggplot(SCTI_7235_plot, aes(x = quarter)) +
+  geom_line(aes(y = wage_scaled, color = "Wage Growth")) +
+  geom_line(aes(y = brent_scaled, color = "Brent")) +
+  facet_wrap(~ NACE2007) + 
+  scale_color_manual(
+    values = c("Wage Growth" = "black", "Brent" = "Red")
+  ) +
+  labs(
+    title = "Manufacturing Wage Growth and Brent Prices",
+    subtitle = "2012-2017 (7235)",
+    x = "Quarter",
+    y = "Standardized value", 
+    color = "Variable"
+  ) +
+  theme_minimal() # we are not looking at percentage changes in wage growth or 
+# oil prices, we are looking at standardized wage growth 
+# relative to Brent price levels. A value of zero represents 
+# relative averages, and one unit differences are equal in size
+# to standard deviations.
+
+SCTI_7235 |>
+  ggplot(aes(x = quarter, y = wage_growth)) + 
+  geom_line() + 
+  geom_vline(
+    xintercept = zoo::as.yearqtr("2014 Q3"),
+    linetype = "dashed",
+    color = "red"
+  ) + facet_wrap(~ NACE2007) + 
+  labs(
+    title = "Manufacturing Wage Growth at the time of 2014 Brent Price collapse",
+    subtitle = "2014 Q3 is dashed demarcation (7235)",
+    x = "Quarter",
+    y = "Formula YoY Wage Growth (%)", 
+  ) +
+  theme_minimal()
+
+                                              
+SCTI_7235_summary <- SCTI_7235 |> 
+  group_by(NACE2007, period) |>
+  summarise(
+    avg_growth = mean(wage_growth, na.rm = TRUE),
+    .groups = "drop"
+  ) 
+
+SCTI_7235_summary    
+
+ggplot(SCTI_7235_summary,
+       aes(x = period, y = avg_growth)) +
+  geom_col() +
+  facet_wrap(~ NACE2007) + 
+  scale_x_discrete(limits = c("Before", "During", "After")) +
+  labs(
+    title = "Mean-Manufacturing Wage Growth during 2014 Oil Price Collapse",
+    subtitle = "Data from 2012-2017 (7235)",
+    x = "Period",
+    y = "Average YoY wage growth (%)"
+  ) + 
+  theme_minimal() # bars showing how annual wages changed given their periods  
+                                                  
+SCTI_7235_sum_comp <- SCTI_7235_summary |>
+  pivot_wider(
+    names_from = period,
+    values_from = avg_growth
+  ) |>
+  mutate(
+    during_difference = During - Before, 
+    after_difference = After- Before
+  ) # shows us the differences between the different periods                                                 
+
+
+SCTI_7235_sum_comp
+
+## 9175 (2014 - 2020) 
+
+SCTI_9175 <- SCTI_9175 |>
+  mutate(
+    period = case_when(
+      quarter < as.yearqtr("2014 Q3") ~ "Before",
+      quarter < as.yearqtr("2016 Q1") ~ "During",
+      quarter < as.yearqtr("2018 Q1") ~ "After",
+      quarter < as.yearqtr("2020 Q1") ~ "Before",
+      quarter < as.yearqtr("2021 Q1") ~ "During",
+      TRUE ~ "After"
+    )
+  )
+
+SCTI_9175_summary <- SCTI_9175 |> 
+  group_by(NACE, episode, period) |>
+  summarise(
+    avg_growth = mean(value, na.rm = TRUE),
+    .groups = "drop"
+  ) # created a summary following these anchnorings
+
+SCTI_9175_summary
+
+
+SCTI_9175_sum_comp <- SCTI_9175_summary |>
+  pivot_wider(
+    names_from = period,
+    values_from = avg_growth
+  ) |>
+  mutate(
+    during_difference = During - Before, 
+    after_difference = After- Before
+  )
+
+SCTI_9175_sum_comp
+
+SCTI_9175_summary |>
+  filter(NACE %in% c("pub2X06", "pub2X09")) |>
+  ggplot(aes(x = period, y = avg_growth)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(NACE ~ episode) + 
+  scale_x_discrete(
+    limits = c("Before", "During", "After")
+  ) +
+  labs(
+    title = "Wage Growth Aggregate during both oil price collapses",
+    subtitle = "Selected Norwegian Industries (9175)",
+    x = "Period",
+    y = "AVG YoY Wage Growth (%)"
+  ) +
+  theme_minimal()
+
+### 2020 OIL SHOCK
+
+## 12314
+
+SCTI_12314_summary <- SCTI_12314 |> 
+  group_by(NACE2007, period) |>
+  summarise(
+    avg_growth = mean(wage_growth, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+SCTI_12314_summary
+
+SCTI_12314_sum_comp <- SCTI_12314_summary |>
+  pivot_wider(
+    names_from = period,
+    values_from = avg_growth
+  ) |>
+  mutate(
+    during_difference = During - Before, 
+    after_difference = After- Before
+  ) 
+
+SCTI_12314_sum_comp
+
+SCTI_12314_summary |>
+  filter(NACE2007 %in% c("06", "09", "25", "28")) |>
+  ggplot(aes(x = period, y = avg_growth)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~ NACE2007) + 
+  scale_x_discrete(
+    limits = c("Before", "During", "After")
+  ) +
+  labs(
+    title = "Industry Wage Growth during 2020 Oil Price Collapse",
+    subtitle = "2018-2022 (12314)",
+    x = "Period",
+    y = "AVG YoY Wage Growth (%)"
+  ) +
+  theme_minimal()
+
+# 11654
+
+SCTI_11654_summary <- SCTI_11654 |> 
+  group_by(Region, NACE2007, period) |>
+  summarise(
+    avg_growth = mean(wage_growth, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+SCTI_11654_summary
+
+
+SCTI_11654_sum_comp <- SCTI_11654_summary |>
+  pivot_wider(
+    names_from = period,
+    values_from = avg_growth
+  ) |>
+  mutate(
+    during_difference = During - Before, 
+    after_difference = After- Before
+  ) 
+
+SCTI_11654_sum_comp
+
+
+SCTI_11654_summary |>
+  filter(NACE2007 == "05-09") |>
+  ggplot(aes(x = period, y = avg_growth)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~ Region) + 
+  scale_x_discrete(
+    limits = c("Before", "During", "After")
+  ) +
+  labs(
+    title = "Regional Wage Growth during 2020 Oil Price Collapse",
+    subtitle = "Mining and extraction industries (11654)",
+    x = "Period",
+    y = "AVG YoY Wage Growth (%)"
+  ) +
+  theme_minimal()
+
+#INDUSTRY NAMES for SSB 9175 using jsonlite
+
+# Retrieve official industry names in English
+SSB_labels <- jsonlite::fromJSON(
+  "https://data.ssb.no/api/pxwebapi/v2/tables/09175/data?lang=en",
+  simplifyVector = FALSE
+)
+
+# Here a Vector i linking codes to industry names
+industry_names <- unlist(
+  SSB_labels$dimension$NACE$category$label
+)
+
+# Check that industry codes and names were retrieved
+head(industry_names)
+
+# Add industry names to our existing dataset
+SCTI_9175 <- SCTI_9175 |>
+  mutate(
+    industry_name = coalesce(
+      unname(industry_names[NACE]),
+      NACE
+    )
+  )
+
+# Check the result
+SCTI_9175 |>
+  distinct(NACE, industry_name) |>
+  print(n = Inf)
+
+
+#### SIMPLE REGRESSION for SSB 9175 ####
+
+# First we calcute the annual Brent price growth for the regression
+BRENT_9175 <- BRENT_Q |>
+  arrange(quarter) |>
+  mutate(
+    brent_yoy = (brent / lag(brent, 4) - 1) * 100
+  ) |>
+  select(quarter, brent_yoy)
+
+# Adding annual Brent growth to SSB 9175
+REG_9175 <- SCTI_9175 |>
+  left_join(BRENT_9175, by = "quarter")
+
+# Selecting oil and gas extraction industry
+REG_9175_06 <- REG_9175 |>
+  filter(
+    NACE == "pub2X06",
+    is.finite(value),
+    is.finite(brent_yoy)
+  )
+
+# Afterwards we use nrow to check available observations
+nrow(REG_9175_06)
+
+# Using the if, stop method to check if there are no usable observations
+if (nrow(REG_9175_06) < 3) {
+  stop("Not enough complete observations")
+}
+
+# Here is the simple regression model
+model_9175 <- lm(
+  value ~ brent_yoy,
+  data = REG_9175_06
+)
+
+# Examining the results
+summary(model_9175)
+
+# Using ggplot to visualize the model for SSB_9175
+
+ggplot(REG_9175_06,
+       aes(x = brent_yoy, y = value)) +
+  geom_point(color = "blue") +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = "Brent Price Growth, Wages and Salary Growth",
+    subtitle = unique(REG_9175_06$industry_name)[1],
+    x = "Annual Brent Price Growth (%)",
+    y = "Annual Wages and Salary Growth (%)"
+  ) +
+  theme_minimal()
+
+
+# HEATMAP for SSB 9175
+
+# Add industry names to our comparison dataset so that we know the specific industry in the y axis
+
+SCTI_9175_sum_comp <- SCTI_9175_sum_comp |>
+  mutate(
+    industry_name = coalesce(
+      unname(industry_names[NACE]),
+      NACE
+    )
+  )
+
+# Heatmap creation to visualize for all industries
+p_heatmap <- ggplot(SCTI_9175_sum_comp,
+                    aes(x = episode, y = industry_name, fill = during_difference)) + 
+  geom_tile(color = "white" ) +
+  geom_text( aes(label = round(during_difference, 1)), size = 3) +
+  scale_y_discrete( labels = function(x) str_wrap(x, width = 35)) +
+  scale_fill_gradient2(
+    low = "red",
+    mid = "white",
+    high = "blue",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Industry Wages and Salary Growth During Oil Price Shocks",
+    subtitle = "Change in average growth: During minus Before",
+    x = "Oil Price Shock",
+    y = "Industry",
+    fill = "Change (pp)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10)
+  )
+
+print(p_heatmap)
+
+# Creating a png
+ggsave(
+  "heatmap.png",
+  p_heatmap,
+  width = 16,
+  height = 24,
+  dpi = 300
+)
+
+
+# WAGE GROWTH PLOT for SSB 9175
+
+SCTI_9175 |>
+  filter(NACE %in% c("pub2X06", "pub2X09")) |>
+  ggplot(aes (x = quarter, y = value, color = industry_name)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline( yintercept = 0,linetype = "dotted") +
+  geom_vline(xintercept = as.yearqtr( "2014 Q3"),
+             linetype = "dashed", color = "red") + 
+  geom_vline(xintercept = as.yearqtr( "2020 Q1"),
+             linetype = "dashed", color = "red") + 
+  labs(
+    title = "Industry Wages and Salary Growth and Oil Price Collapses",
+    subtitle = "2014 Q3 and 2020 Q1",
+    x = "Quarter",
+    y = "Annual Wages and Salary Growth (%)",
+    color = "Industry"
+  ) +
+  theme_minimal()
+
+
+
+```
+
+\newpage
+
+```{r Figure 4.1, fig.show='hold', out.width='100%', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(BRENT, aes(x = date, y = price)) + geom_line(color = "red") + 
+  labs(
+    title = "Oil Price Futures",
+    x = "Date",
+    y = "USD per barrel"
+  ) + theme_minimal()
+
+ggplot(BRENT_Q, aes(x = quarter, y = brent)) + geom_line(color = "red") + 
+  labs(
+    title = "Figure 4.1: Oil Price Futures (Quarterly)",
+    x = "Quarters",
+    y = "USD per barrel"
+  ) + theme_minimal()
+```
+
+\newpage
+
+```{r Figure 4.2, fig.show='hold', out.width='100%', fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(REG_9175_06,
+       aes(x = brent_yoy, y = value)) +
+  geom_point(color = "blue") +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = "Figure 4.2: Brent Price Growth, Wages and Salary Growth",
+    subtitle = unique(REG_9175_06$industry_name)[1],
+    x = "Annual Brent Price Growth (%)",
+    y = "Annual Wages and Salary Growth (%)"
+  ) +
+  theme_minimal()
+```
+
+\newpage
+
+```{r Figure 4.3, fig.show='hold', out.width='100%', fig.height= 18 , fig.width=12, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(SCTI_9175_sum_comp,
+                    aes(x = episode, y = industry_name, fill = during_difference)) + 
+  geom_tile(color = "white" ) +
+  geom_text( aes(label = round(during_difference, 1)), size = 3) +
+  scale_y_discrete( labels = function(x) str_wrap(x, width = 35)) +
+  scale_fill_gradient2(
+    low = "red",
+    mid = "white",
+    high = "blue",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Figure 4.3: Industry Wages and Salary Growth During Oil-Price Shocks",
+    subtitle = "Change in average growth: During minus Before",
+    x = "Oil Price Shock",
+    y = "Industry",
+    fill = "Change (pp)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10)
+  )
+
+```
+
+\newpage
+
+```{r Figure 4.4, fig.show='hold', out.width='100%',fig.width= 18 , fig.height= 10, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+SCTI_9175 |>
+  filter(NACE %in% c("pub2X06", "pub2X09")) |>
+  ggplot(aes (x = quarter, y = value, color = industry_name)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline( yintercept = 0,linetype = "dotted") +
+  geom_vline(xintercept = as.yearqtr( "2014 Q3"),
+             linetype = "dashed", color = "red") + 
+  geom_vline(xintercept = as.yearqtr( "2020 Q1"),
+             linetype = "dashed", color = "red") + 
+  labs(
+    title = "Figure 4.4: Industry Wages and Salary Growth and Oil-Price Shocks",
+    subtitle = "2014 Q3 and 2020 Q1",
+    x = "Quarter",
+    y = "Annual Wages and Salary Growth (%)",
+    color = "Industry"
+  ) +
+  theme_minimal()
+```

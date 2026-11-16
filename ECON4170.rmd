@@ -119,7 +119,7 @@ str(k09175) # here we can see that this data-set is very wide. There are 85 rows
 
 rm(k09175,SSB_09175) # start with clean slate. 
 
-tables <- c(9175, 07219, 07235, 12314, 11654) # the name of each table.
+tables <- c(09175, 07219, 07235, 12314, 11654) # the name of each table.
 
 SSB_metadata <- list() # empty list to store the metadata acquired. 
 

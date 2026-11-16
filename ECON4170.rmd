@@ -83,9 +83,9 @@ set.seed(1234567)
 
 # Introduction and objective
 
-The oil industry represents a large share of the value creation in the Norwegian economy. Given this, understanding how oil price changes affect petroleum-related industries, employment and economic activity through wages is key. When considering these oil price shocks, it is natural to consider the advents of 2014 and 2020. Despite both downturns being measured in oil prices, not all oil price shocks are not created equal. As we will see, the surrounding economic and financial conditions during these time periods differed, and these should be represented through the acquired data. 
+The oil industry represents a large share of the value creation, export and revenue in the Norwegian economy (Ministry of Energy & Norwegian Offshore Directorate, 2026). Given this, understanding how oil price changes affect petroleum-related industries, employment and economic activity through wages becomes the basis of this inquiry. When considering these oil price shocks, it is natural to consider the advents of 2014 and 2020. Despite both downturns being measured in oil prices, not all oil price shocks are created equal. As this analysis will make clear: the surrounding economic and financial conditions during these time periods will differ, and these should be represented through the acquired data. 
 
-Therefore, we are interested in looking at the oil price shocks, and how these affected the wage growth. Here, we introduce a lag notation when looking at wage growth preceding, during and following said shocks. This analysis integrates historical Brent crude oil spot price with quarterly wage data from Statistics Norway (SSB). In this pursuit, a total of five SSB data sets are acquired to examine industry-level earnings, manufacturing wages, wage developments. While we have five SSB data sets, 9175 is the key data set for length constraints. Furthermore, the workflow introduced from the lectures will be applied. This involves acquiring the data, cleaning it, transforming it, and attempting to visualize it using R. To compare with the aforementioned time tables, year-over-year (YoY) wage growth is calculated and comparisons are performed. 
+Therefore, we are interested in looking at the oil price shocks, and how these influenced wage growth development. Here, we introduce a lag notation when looking at wage growth preceding, during and following said shocks. This analysis integrates historical Brent crude oil spot price with quarterly wage data from Statistics Norway (SSB). In this pursuit, a total of five SSB data sets are acquired to examine industry-level earnings, manufacturing wages, wage developments. While we have five SSB data sets, 9175 is the key data set for length constraints. Furthermore, the workflow introduced from the lectures will be applied. This involves acquiring the data, cleaning it, transforming it, and attempting to visualize it using R. To compare with the aforementioned time tables, year-over-year (YoY) wage growth is calculated and comparisons are performed. 
 
 Consequently, we are not attempting at establishing causality; We are trying to understand and juxtapose observed wage developments with that of two oil price shocks. For larger visualizations defer to the appendix. 
 
@@ -948,19 +948,19 @@ rm(data, HW_SSB_7219, HW_SSB_9175, MW_SSB_7235, RW_SSB_11654, IW_SSB_12314)
 
 # Data and preparation
 
-We must acquire and prepare the relevant data. The former involves data scraping and API integration. The lectures define scraping as "automatically extracting data from web pages". R is instructed to read a saved URL, select the HTML elements that are unique to the page and then extract them and import. A sanity check was performed when applying 'quantmod' and 'DCOILBRENTEU' to see whether the data we scraped was congruent with the data provided officially from FRED. The comparison proved successful. While scraping was practically feasible, FRED's data was opted given its official package implementation 
+We must acquire and prepare the relevant data. The former involves data scraping and API integration. The lectures define scraping as "automatically extracting data from web pages". R is instructed to read a saved URL, select the HTML elements that are unique to the page and then extract them and import. A sanity check was performed when applying 'quantmod' and 'DCOILBRENTEU' to see whether the data we scraped was congruent with the data provided officially from FRED. The comparison proved successful. While scraping was practically feasible, FRED's data was opted given its official package implementation (U.S. Energy Information Administration, 2026)
 
 The acquiring of SSB data sets relied on the application of 'api_data_2'. Here, R communicates with SSB's API in requesting the data sets that we are interested in. The data sets that were collected through this method are 9175, 07219, 07235, 12314 & 11654. A for loop function was applied. The reason for the selection of these five data sets is for two reasons: coverage and data surplus. Coverage is important here because not all data sets have data points that satisfy the YoY condition. For example, 7219 & 7235 are data sets that cover the necessary time period for the 2014 shock; data sets 12314 and 11654 do the same for the 2020 time period. Moreover, 9175 covers the entire time period from 1995 - 2026. Data surplus was considered because we preferred having more data to dissect than too little.
 
-- 9175: aggregate wages (1995Q1-2026Q2) 
+- 9175: aggregate wages (1995Q1-2026Q2) - (Statistics Norway, 2026c)
 
-- 7219: industry level wage index (2000Q1-2018Q1) 
+- 7219: industry level wage index (2000Q1-2018Q1) - (Statistics Norway, 2018a)
 
-- 7235: manufacturing wage index (2005Q1-2018Q2) 
+- 7235: manufacturing wage index (2005Q1-2018Q2) - (Statistics Norway, 2018b)
 
-- 12314: industry wide earnings (2016Q1-2026Q2)
+- 12314: industry wide earnings (2016Q1-2026Q2) - (Statistics Norway, 2026a)
 
-- 11654: regional conditioned earnings (2016Q1-2026Q2)
+- 11654: regional conditioned earnings (2016Q1-2026Q2) - (Statistics Norway, 2026b)
 
 Preparation of the data involves cleaning, transforming and integrating. More on this in the Methods segment.
 
@@ -1633,7 +1633,20 @@ Overall, our analysis provides a foundation on understanding how wage developmen
 Generative AI tool (GPTUiO) was used as a supplementary tool to help with the R programming, debugging and improving grammatical errors. All analytical and statistical decisions and final conclusions were reviewed by us. Furthermore, the responsibility for the selection, methodological decisions and interpretation of our results with given conclusions remain with us as the authors of this compulsory paper. AI was therefore used as a supplementary tool and helped us through errors that resulted in symbol misplacement and errors in how the ggplot illustration looked.  It also helped with errors that resulted in creating the heatmap as multiple revisions were needed to correct the visualization of Norwegian industries that resulted in overlap of industry names on the y-axis. AI tools were therefore not a substitution but a helpful tool to find specific errors.  
 
 # References
+
 Ministry of Energy & Norwegian Offshore Directorate. (2026, October 8). The government's revenues. Norwegian Petroleum. https://www.norskpetroleum.no/en/economy/governments-revenues/
 NOU 2024:6 (2024). Grunnnlaget for inntektsoppgjørene 2024, 4 Frontfagsmodellen. Arbeids- og inkluderingsdepartementet. https://www.regjeringen.no/no/dokumenter/nou-2024-6/id3031371/
+
+Statistics Norway. (2026). Table 9175: Wages and employment, by industry. Unadjusted and seasonally adjusted figures. Statbank Norway. https://www.ssb.no/en/statbank1/table/09175
+
+Statistics Norway. (2026). Table 07219: Index on average monthly earnings and index on average basic salaries, by industry. Statbank Norway. https://www.ssb.no/en/statbank1/table/07219
+
+Statistics Norway. (2026). Table 07235: Wage Index, manufacturing. Statbank Norway. https://www.ssb.no/en/statbank1/table/07235
+
+Statistics Norway. (2026). Table 12314: Employees, jobs, earnings, and earnings index, by industry division. Statbank Norway. https://www.ssb.no/en/statbank1/table/12314
+
+Statistics Norway. (2026). Table 11654: Employees, jobs, earnings, and earnings index, by place of work and industry division. Statbank Norway. https://www.ssb.no/en/statbank1/table/11654
+
+U.S. Energy Information Administration. (n.d.). Crude oil prices: Brent – Europe (DCOILBRENTEU). Federal Reserve Bank of St. Louis. https://fred.stlouisfed.org/series/DCOILBRENTEU
 
 # Appendix
